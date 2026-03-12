@@ -123,6 +123,7 @@ To run the app from your GitHub repo and share a public app URL:
 Notes:
 - The app health check is configured at `/api/health`.
 - Every push to `main` auto-deploys by default (`autoDeploy: true` in `render.yaml`).
+- Python runtime is pinned with `runtime.txt` (`python-3.12.8`) for dependency compatibility.
 
 ## Dataset inspection (read-only)
 
