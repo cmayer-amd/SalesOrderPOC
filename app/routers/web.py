@@ -46,19 +46,8 @@ def _fit_mail_cell(value: object, max_len: int) -> str:
     return f"{text[: max_len - 3]}..."
 
 
-def _grid_table_lines(headers: list[str], rows: list[list[str]]) -> list[str]:
-    widths = [len(h) for h in headers]
-    for row in rows:
-        for i, cell in enumerate(row):
-            widths[i] = max(widths[i], len(cell))
-
-    sep = "+" + "+".join("-" * (w + 2) for w in widths) + "+"
-    header_row = "| " + " | ".join(headers[i].ljust(widths[i]) for i in range(len(headers))) + " |"
-    lines = [sep, header_row, sep]
-    for row in rows:
-        lines.append("| " + " | ".join(row[i].ljust(widths[i]) for i in range(len(headers))) + " |")
-    lines.append(sep)
-    return lines
+def _mail_kv_line(label: str, value: object) -> str:
+    return f"- {label}: {value}"
 
 
 def _origin_context_from_params(params: dict[str, str]) -> tuple[list[str], dict[str, str], str]:
@@ -178,27 +167,15 @@ def _snapshot_review_mailto(report: dict[str, object]) -> str:
         ]
     )
 
-    summary_headers = ["Field", "Value"]
-    summary_rows = [
-        ["Sales Order", _fit_mail_cell(sales_order, 24)],
-        ["Customer", _fit_mail_cell(header.get("customer", ""), 24)],
-        ["Region", _fit_mail_cell(header.get("region", ""), 24)],
-        ["Schedules", str(schedule_count)],
-        ["Unscheduled", str(unscheduled_count)],
-        ["Delayed", str(delayed_count)],
+    summary_lines = [
+        _mail_kv_line("Sales Order", _fit_mail_cell(sales_order, 24)),
+        _mail_kv_line("Customer", _fit_mail_cell(header.get("customer", ""), 24)),
+        _mail_kv_line("Region", _fit_mail_cell(header.get("region", ""), 24)),
+        _mail_kv_line("Schedules", schedule_count),
+        _mail_kv_line("Unscheduled", unscheduled_count),
+        _mail_kv_line("Delayed", delayed_count),
     ]
-    schedule_headers = [
-        "Item",
-        "Part",
-        "Sch",
-        "Reason",
-        "Req Qty",
-        "Req Date",
-        "Conf Qty",
-        "Sched Date",
-        "Contrib",
-    ]
-    schedule_rows: list[list[str]] = []
+    schedule_lines: list[str] = []
     for r in results:
         if not isinstance(r, dict):
             continue
@@ -211,17 +188,18 @@ def _snapshot_review_mailto(report: dict[str, object]) -> str:
                 if isinstance(c, dict) and (c.get("label", "") or c.get("code", ""))
             ]
         )
-        schedule_rows.append(
+        schedule_lines.extend(
             [
-                _fit_mail_cell(r.get("item_number", ""), 6),
-                _fit_mail_cell(r.get("material", ""), 12),
-                _fit_mail_cell(r.get("schedule_line", ""), 6),
-                _fit_mail_cell(reason_value, 26),
-                _fit_mail_cell(r.get("requested_qty", ""), 8),
-                _fit_mail_cell(r.get("requested_date", ""), 10),
-                _fit_mail_cell(r.get("confirmed_qty", ""), 8),
-                _fit_mail_cell(r.get("schedule_date", ""), 10),
-                _fit_mail_cell(contributing_codes, 40),
+                f"[{_fit_mail_cell(r.get('item_number', ''), 6)} / "
+                f"{_fit_mail_cell(r.get('material', ''), 12)} / "
+                f"Sch {_fit_mail_cell(r.get('schedule_line', ''), 6)}]",
+                f"  Reason: {_fit_mail_cell(reason_value, 48)}",
+                f"  Requested: Qty {_fit_mail_cell(r.get('requested_qty', ''), 10)} | "
+                f"Date {_fit_mail_cell(r.get('requested_date', ''), 12)}",
+                f"  Confirmed: Qty {_fit_mail_cell(r.get('confirmed_qty', ''), 10)} | "
+                f"Date {_fit_mail_cell(r.get('schedule_date', ''), 12)}",
+                f"  Contributing: {_fit_mail_cell(contributing_codes or 'None', 80)}",
+                "",
             ]
         )
 
@@ -231,12 +209,10 @@ def _snapshot_review_mailto(report: dict[str, object]) -> str:
         "Please review the snapshot schedule analysis below.",
         "",
         "ORDER SUMMARY",
-        "-------------",
-        *_grid_table_lines(summary_headers, summary_rows),
+        *summary_lines,
         "",
         "SCHEDULE DETAILS",
-        "----------------",
-        *_grid_table_lines(schedule_headers, schedule_rows),
+        *schedule_lines,
         "",
         "Regards,",
         "Sales Order Schedule Troubleshooter",
