@@ -23,10 +23,6 @@ DOCUMENT_FILES: dict[str, dict[str, str]] = {
     "functional-design": {"title": "Functional Design", "path": "FUNCTIONAL_DESIGN.md"},
     "scenario-test-plan": {"title": "Scenario Test Plan", "path": "SCENARIO_TEST_PLAN.md"},
     "management-one-pager": {"title": "POC Management One-Pager", "path": "POC_MANAGEMENT_ONE_PAGER.md"},
-    "order-query-detail-consistency-change": {
-        "title": "Order Query-Detail Consistency Change",
-        "path": "ORDER_QUERY_DETAIL_CONSISTENCY_CHANGE.md",
-    },
 }
 
 
@@ -478,7 +474,6 @@ def documents_index(request: Request) -> HTMLResponse:
             {
                 "key": key,
                 "title": config["title"],
-                "path": config["path"],
             }
         )
 
@@ -505,7 +500,6 @@ def document_view(doc_key: str, request: Request) -> HTMLResponse:
         "document_view.html",
         {
             "doc_title": config["title"],
-            "doc_path": config["path"],
             "doc_content": content,
         },
     )

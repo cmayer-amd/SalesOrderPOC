@@ -47,6 +47,7 @@ Representative order examples from test data are included below.
 | S14 | Snapshot support email workflow | Snapshot order page | `Email PLPC Support` mailto with readable details |
 | S15 | Docs usability | `/docs` | visible Home link on right side |
 | S16 | Render deploy runtime compatibility | Render build/deploy logs | service runs on Python 3.12.8 and health check passes |
+| S17 | Query-detail consistency and state retention | `5000000039` and filtered list flows | exact SO behavior, preserved query context, same detail format, back returns same state |
 
 ---
 
@@ -244,6 +245,20 @@ Representative order examples from test data are included below.
   - If stale cache causes wrong runtime selection, run **Manual Deploy -> Clear build cache & deploy** and re-validate health.
 - **Expected**: Successful build/deploy with healthy service endpoint.
 
+## S17 - Query-Detail Consistency and List-State Retention
+- **Objective**: Ensure query-based navigation and hyperlink navigation lead to the same detail experience and preserve user context.
+- **TUT**
+  - Validate sales-order filtering path uses exact match when `sales_order` is provided.
+  - Validate source query parameters are carried into detail links.
+- **FUT**
+  - Enter exact SO (`5000000039`) and submit query; verify redirect opens the same detail layout as hyperlink navigation.
+  - Query with combined filters (`sales_order`, `customer`, `material`, `plant`, snapshot, page/page-size), open detail, verify sidebar reflects source context.
+  - Click `Back` and confirm list returns with same filters and page state.
+- **Integration checks**
+  - `GET /api/troubleshoot?sales_order=5000000039` returns only that order's schedules.
+  - Detail route remains stable with query-context params appended.
+- **Expected**: No context mismatch between query and detail; user trust and continuity are preserved.
+
 ---
 
 ## 5) Future SAP-Connected Validation Addendum
@@ -272,7 +287,7 @@ When integrating this POC with SAP S/4HANA (PS4/QS4/DS4), extend each scenario w
 
 The POC scenario test cycle is complete when:
 
-- All 16 scenarios pass TUT + FUT checks.
+- All 17 scenarios pass TUT + FUT checks.
 - API and web outputs are consistent for equivalent queries.
 - No final output contains `NO_SCHEDULE_BOP_FAILED` or `BOP_FAILED`.
 - Delayed stock/planned-order cases include explicit push-out explanation.

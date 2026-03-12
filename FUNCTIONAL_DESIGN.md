@@ -183,6 +183,7 @@ Behavior:
 - Sales-order pagination controls shown above and below list
 - Pagination links preserve filter context across pages
 - Main list includes `Part(s)` as aggregated materials per order
+- If `sales_order` is entered, matching uses exact SO value and prioritizes SO over other text filters
 - Row highlights:
   - Red = unscheduled
   - Amber = delayed (pushed out)
@@ -213,6 +214,14 @@ Panels:
 - Snapshot mail action provides prefilled, human-readable review details to PLPC support
 - Order header shows `Parts in order` to represent multi-line, multi-part orders
 - Left sidebar shows opened-from query filter criteria for drill-down context
+
+## 8.3 Query-to-Detail Consistency Rules
+
+- Detail links preserve originating query context (`sales_order`, `customer`, `material`, `plant`, readiness filter, page, page size, snapshot date).
+- Querying by an exact sales order that yields one order redirects to that same detail format used by hyperlink navigation.
+- The detail page sidebar reflects the same order/query context the user came from.
+- `Back` navigation is expected to return to the same filtered and paged list state.
+- Snapshot version selection remains consistent between list and detail flows.
 
 Highlights:
 
