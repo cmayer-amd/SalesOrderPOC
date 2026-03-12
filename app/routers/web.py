@@ -25,6 +25,10 @@ DOCUMENT_FILES: dict[str, dict[str, str]] = {
     "functional-design": {"title": "Functional Design", "path": "FUNCTIONAL_DESIGN.md"},
     "scenario-test-plan": {"title": "Scenario Test Plan", "path": "SCENARIO_TEST_PLAN.md"},
     "management-one-pager": {"title": "POC Management One-Pager", "path": "POC_MANAGEMENT_ONE_PAGER.md"},
+    "order-query-detail-consistency-change": {
+        "title": "Order Query-Detail Consistency Change",
+        "path": "ORDER_QUERY_DETAIL_CONSISTENCY_CHANGE.md",
+    },
 }
 
 
