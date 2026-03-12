@@ -4,11 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.data_loader import DataStore
 from app.reason_engine import (
-    current_state_check_sales_order,
     determine_reason,
     snapshot_sales_order,
     troubleshoot_orders,
-    troubleshoot_sales_order,
 )
 
 
@@ -107,18 +105,11 @@ def schedule_detail(
 @router.get("/troubleshoot/{so_number}")
 def troubleshoot(
     so_number: str,
-    mode: str = Query(default="legacy"),
     snapshot_date: str | None = Query(default=None),
     data_store: DataStore = Depends(get_store),
 ) -> dict[str, object]:
-    selected_mode = (mode or "legacy").lower()
     snapshot_store = get_snapshot_store(snapshot_date)
-    if selected_mode == "snapshot":
-        report = snapshot_sales_order(so_number, snapshot_store)
-    elif selected_mode == "current":
-        report = current_state_check_sales_order(so_number, data_store, snapshot_store=snapshot_store)
-    else:
-        report = troubleshoot_sales_order(so_number, snapshot_store)
+    report = snapshot_sales_order(so_number, snapshot_store)
 
     if report.get("message") == "Sales order not found.":
         raise HTTPException(status_code=404, detail=report["message"])

@@ -17,7 +17,6 @@
   <p>Parts in order: {{ order_parts | join(", ") }}</p>
   {% endif %}
   <form method="get" class="snapshot-form">
-    <input type="hidden" name="mode" value="{{ mode }}">
     {% for key, value in origin_hidden_fields.items() %}
     <input type="hidden" name="{{ key }}" value="{{ value }}">
     {% endfor %}
@@ -31,17 +30,16 @@
     </label>
   </form>
   <div class="actions mode-actions">
-    <a class="mode-link {% if mode != 'current' %}active{% endif %}" href="/orders/{{ report.sales_order }}?mode=snapshot&snapshot_date={{ snapshot_date }}{{ origin_query_suffix }}">Snapshot (Last BOP Run)</a>
-    <a class="mode-link {% if mode == 'current' %}active{% endif %}" href="/orders/{{ report.sales_order }}?mode=current&snapshot_date={{ snapshot_date }}{{ origin_query_suffix }}">Check Current State</a>
+    <span class="mode-link active">Snapshot (Last BOP Run)</span>
   </div>
 </section>
 
 <section class="card">
-  <h2>Schedule Analysis{% if mode == 'current' %} - Current Check{% else %} - Snapshot{% endif %}</h2>
+  <h2>Schedule Analysis - Snapshot</h2>
   <div class="actions">
     <a href="/">Home</a>
     <a href="{{ back_url or '/' }}">Back</a>
-    {% if mode == 'snapshot' and review_mailto %}
+    {% if review_mailto %}
     <a class="support-link" href="{{ review_mailto }}">Email PLPC Support</a>
     {% endif %}
   </div>
@@ -53,63 +51,37 @@
         <th>Part</th>
         <th>Schedule</th>
         <th>Recorded Reason</th>
-        {% if mode == 'current' %}
-        <th>Current Reason</th>
-        {% endif %}
         <th>Contributing Reasons</th>
         <th>Summary</th>
         <th>Req Qty</th>
         <th>Recorded Conf Qty</th>
-        {% if mode == 'current' %}
-        <th>Current Conf Qty</th>
-        {% endif %}
         <th>Req Date</th>
         <th>Recorded Sched Date</th>
-        {% if mode == 'current' %}
-        <th>Current Sched Date</th>
-        <th>Can Meet Req Date Now</th>
-        {% endif %}
       </tr>
     </thead>
     <tbody>
       {% for r in report.results %}
-      {% set schedule_date_view = r.current_schedule_date if mode == 'current' else r.schedule_date %}
-      {% set is_unscheduled = (not schedule_date_view) or ((r.current_reason_code if mode == 'current' else r.reason_code) and (r.current_reason_code if mode == 'current' else r.reason_code)[:11] == "NO_SCHEDULE") %}
+      {% set schedule_date_view = r.schedule_date %}
+      {% set is_unscheduled = (not schedule_date_view) or (r.reason_code and r.reason_code[:11] == "NO_SCHEDULE") %}
       {% set is_delayed = schedule_date_view and r.requested_date and schedule_date_view > r.requested_date %}
       <tr class="{% if is_unscheduled %}row-unscheduled{% elif is_delayed %}row-delayed{% endif %}">
         <td>{{ r.item_number }}</td>
         <td class="code">{{ r.material }}</td>
         <td>{{ r.schedule_line }}</td>
         <td class="code">{{ r.reason_code }}</td>
-        {% if mode == 'current' %}
-        <td class="code">{{ r.current_reason_code }}</td>
-        {% endif %}
         <td class="trace-cell">
-          {% set reasons_view = r.current_contributing_reasons if mode == 'current' else r.contributing_reasons %}
+          {% set reasons_view = r.contributing_reasons %}
           {% if reasons_view %}
             {% for cr in reasons_view %}
               <span class="trace-chip code">{{ cr.code }}</span>
             {% endfor %}
           {% endif %}
         </td>
-        <td>{{ r.current_reason_text if mode == 'current' else r.reason_text }}</td>
+        <td>{{ r.reason_text }}</td>
         <td>{{ r.requested_qty }}</td>
         <td>{{ r.confirmed_qty }}</td>
-        {% if mode == 'current' %}
-        <td>{{ r.current_confirmed_qty }}</td>
-        {% endif %}
         <td>{{ r.requested_date }}</td>
         <td>{{ r.schedule_date }}</td>
-        {% if mode == 'current' %}
-        <td>{{ r.current_schedule_date }}</td>
-        <td>
-          {% if r.can_meet_requested_date_now %}
-            <span class="status-good">Yes</span>
-          {% else %}
-            <span class="status-bad">No</span>
-          {% endif %}
-        </td>
-        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
@@ -117,7 +89,6 @@
   </div>
 </section>
 
-{% if mode == 'snapshot' %}
 <section class="card">
   <h2>Reason Trace</h2>
   {% for r in report.results %}
@@ -145,6 +116,5 @@
     </div>
   {% endfor %}
 </section>
-{% endif %}
 {% endif %}
 {% endblock %}

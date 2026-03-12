@@ -10,10 +10,8 @@ from fastapi.templating import Jinja2Templates
 
 from app.data_loader import DataStore
 from app.reason_engine import (
-    current_state_check_sales_order,
     snapshot_sales_order,
     troubleshoot_orders,
-    troubleshoot_sales_order,
 )
 
 
@@ -312,7 +310,7 @@ def order_detail(
     request: Request,
     data_store: DataStore = Depends(get_store),
 ) -> HTMLResponse:
-    mode = (request.query_params.get("mode") or "snapshot").strip().lower()
+    mode = "snapshot"
     snapshot_date = (request.query_params.get("snapshot_date") or "").strip()
     selected_snapshot_date, snapshot_store, available_snapshot_versions = get_snapshot_selection(snapshot_date)
     origin_context_chips, origin_hidden_fields, origin_query_suffix = _origin_context_from_params(
@@ -337,14 +335,8 @@ def order_detail(
             status_code=404,
         )
 
-    if mode == "current":
-        report = current_state_check_sales_order(so_number, data_store, snapshot_store=snapshot_store)
-    elif mode == "legacy":
-        report = troubleshoot_sales_order(so_number, snapshot_store)
-    else:
-        report = snapshot_sales_order(so_number, snapshot_store)
-
-    review_mailto = _snapshot_review_mailto(report) if mode == "snapshot" else ""
+    report = snapshot_sales_order(so_number, snapshot_store)
+    review_mailto = _snapshot_review_mailto(report)
     order_parts = sorted(
         {
             str(r.get("material", "") or "")
