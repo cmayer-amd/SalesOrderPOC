@@ -109,6 +109,21 @@ Notes:
 - `.devcontainer/devcontainer.json` is included to preconfigure Python 3.12 and port forwarding.
 - The app runs with Linux shell commands in Codespaces (not the Windows PowerShell scripts).
 
+## Run from GitHub with a shareable URL (Render)
+
+GitHub repository URLs host source code, not a running FastAPI process.  
+To run the app from your GitHub repo and share a public app URL:
+
+1. Open [Render](https://render.com/) and sign in.
+2. Click **New** -> **Blueprint**.
+3. Connect GitHub repo: `cmayer-amd/SalesOrderPOC`.
+4. Render will detect `render.yaml` and create web service `sales-order-poc`.
+5. Deploy and open the generated URL (for example: `https://sales-order-poc.onrender.com`).
+
+Notes:
+- The app health check is configured at `/api/health`.
+- Every push to `main` auto-deploys by default (`autoDeploy: true` in `render.yaml`).
+
 ## Dataset inspection (read-only)
 
 - The **Dataset Status** tiles on `/` are clickable.
