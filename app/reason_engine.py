@@ -48,17 +48,84 @@ def _is_pushed_out(schedule: dict[str, Any]) -> bool:
     return bool(requested_date and schedule_date and schedule_date > requested_date)
 
 
-def _earliest_supply_date(stock_rows: list[dict[str, Any]], planned_rows: list[dict[str, Any]]) -> str:
-    dates: list[str] = []
-    for row in stock_rows:
-        stock_date = str(row.get("stock_date", "") or "")
-        if stock_date:
-            dates.append(stock_date)
-    for row in planned_rows:
-        available_date = str(row.get("available_date", "") or "")
-        if available_date:
-            dates.append(available_date)
+def _earliest_row_date(rows: list[dict[str, Any]], field_name: str) -> str:
+    dates = [str(r.get(field_name, "") or "") for r in rows if str(r.get(field_name, "") or "")]
     return min(dates) if dates else ""
+
+
+def _pushed_out_explanation(
+    requested_date: str,
+    schedule_date: str,
+    stock_qty: float,
+    planned_qty: float,
+    earliest_stock_date: str,
+    earliest_planned_date: str,
+    reason_code: str = "",
+) -> str:
+    if not requested_date or not schedule_date or schedule_date <= requested_date:
+        return ""
+
+    prefix = (
+        f"Requested date ({requested_date}) is earlier than recorded schedule date ({schedule_date})."
+    )
+
+    has_stock = stock_qty > 0
+    has_planned = planned_qty > 0
+
+    if reason_code == "CONFIRMED_FROM_STOCK" and has_stock:
+        if earliest_stock_date and earliest_stock_date > requested_date:
+            return f"{prefix} Stock availability date ({earliest_stock_date}) is after the requested date."
+        return (
+            f"{prefix} Stock is available, but scheduling/sequence constraints delayed confirmation beyond the requested date."
+        )
+
+    if reason_code == "CONFIRMED_FROM_PLANNED_ORDER" and has_planned:
+        if earliest_planned_date and earliest_planned_date > requested_date:
+            return (
+                f"{prefix} Planned-order supply is available on {earliest_planned_date}, which is after the requested date."
+            )
+        return f"{prefix} Confirmation depends on planned-order timing after the requested date."
+
+    if reason_code == "PARTIAL_STOCK_PLANNED_ORDER" and has_stock and has_planned:
+        if earliest_planned_date and earliest_planned_date > requested_date:
+            return (
+                f"{prefix} Source stock contributes, but full requested quantity also depends on planned-order "
+                f"supply available on {earliest_planned_date}."
+            )
+        return (
+            f"{prefix} Partial stock exists, and remaining quantity is covered by later supply timing constraints."
+        )
+
+    if has_stock and has_planned:
+        if earliest_stock_date and earliest_stock_date <= requested_date and earliest_planned_date and earliest_planned_date > requested_date:
+            return (
+                f"{prefix} Source stock exists by requested date, but full requested quantity also depends on "
+                f"planned-order supply available on {earliest_planned_date}."
+            )
+        if earliest_stock_date and earliest_stock_date > requested_date:
+            return f"{prefix} Stock becomes available on {earliest_stock_date}, after the requested date."
+        if earliest_planned_date and earliest_planned_date > requested_date:
+            return f"{prefix} Planned-order supply date ({earliest_planned_date}) is after the requested date."
+        return (
+            f"{prefix} Stock and planned orders exist, but not enough supply is available on the requested date "
+            "to confirm the schedule on time."
+        )
+
+    if has_stock:
+        if earliest_stock_date and earliest_stock_date > requested_date:
+            return f"{prefix} Stock availability date ({earliest_stock_date}) is after the requested date."
+        return (
+            f"{prefix} Stock exists, but available quantity/timing at request date is insufficient for full on-time confirmation."
+        )
+
+    if has_planned:
+        if earliest_planned_date and earliest_planned_date > requested_date:
+            return (
+                f"{prefix} Planned-order supply is available on {earliest_planned_date}, which is after the requested date."
+            )
+        return f"{prefix} Confirmation depends on planned-order supply timing after the requested date."
+
+    return f"{prefix} No usable supply is available by the requested date."
 
 
 def _allocation_candidates(item: dict[str, Any], header: dict[str, Any], store: DataStore) -> list[dict[str, Any]]:
@@ -244,7 +311,8 @@ def determine_reason(
     source_supply = stock_qty + planned_qty
     effective_supply = source_supply + substitution_coverage
     is_pushed_out = _is_pushed_out(schedule)
-    earliest_supply_date = _earliest_supply_date(stock_rows, planned_rows)
+    earliest_stock_date = _earliest_row_date(stock_rows, "stock_date")
+    earliest_planned_date = _earliest_row_date(planned_rows, "available_date")
 
     if is_delivery_blocked and no_source_supply:
         reason_code = "NO_SCHEDULE_MULTI_FACTOR"
@@ -299,16 +367,15 @@ def determine_reason(
             for r in contributing
         )
     ):
-        if earliest_supply_date and earliest_supply_date > str(schedule.get("requested_date", "") or ""):
-            pushout_text = (
-                "Schedule is pushed out because earliest available supply date "
-                f"({earliest_supply_date}) is after requested date ({schedule.get('requested_date', '')})."
-            )
-        else:
-            pushout_text = (
-                "Schedule is pushed out even though supply exists, indicating timing/availability constraints "
-                "after the requested date."
-            )
+        pushout_text = _pushed_out_explanation(
+            requested_date=str(schedule.get("requested_date", "") or ""),
+            schedule_date=str(schedule.get("schedule_date", "") or ""),
+            stock_qty=stock_qty,
+            planned_qty=planned_qty,
+            earliest_stock_date=earliest_stock_date,
+            earliest_planned_date=earliest_planned_date,
+            reason_code=reason_code,
+        )
         reason_text = f"{reason_text} {pushout_text}"
         contributing.append({"code": "SCHEDULE_PUSHED_OUT", "text": pushout_text})
 
@@ -471,6 +538,7 @@ def _snapshot_contributing_reasons(
     schedule: dict[str, Any],
     last_bop: dict[str, Any],
     deliveries: list[dict[str, Any]],
+    pushed_out_text: str = "",
 ) -> list[dict[str, str]]:
     reasons: list[dict[str, str]] = []
     atp = schedule.get("atp_check_result", "")
@@ -518,8 +586,11 @@ def _snapshot_contributing_reasons(
             {
                 "code": "SCHEDULE_PUSHED_OUT",
                 "text": (
-                    "Recorded schedule date is later than requested date, indicating supply timing "
-                    "or scheduling constraints."
+                    pushed_out_text
+                    or (
+                        "Recorded schedule date is later than requested date, indicating supply timing "
+                        "or scheduling constraints."
+                    )
                 ),
             }
         )
@@ -613,10 +684,28 @@ def snapshot_sales_order(so_number: str, store: DataStore) -> dict[str, Any]:
                 (store.deliveries["sales_order"] == so) & (store.deliveries["item_number"] == item_no)
             ].to_dict(orient="records")
         reason_code, reason_text = _snapshot_reason_from_schedule(schedule)
+        stock_rows, planned_rows, stock_qty, planned_qty = _supply_rows_for_scope(
+            store=store,
+            material=item.get("material", ""),
+            plant=item.get("plant", ""),
+            storage_location=item.get("storage_location", ""),
+        )
+        pushed_out_text = _pushed_out_explanation(
+            requested_date=str(schedule.get("requested_date", "") or ""),
+            schedule_date=str(schedule.get("schedule_date", "") or ""),
+            stock_qty=stock_qty,
+            planned_qty=planned_qty,
+            earliest_stock_date=_earliest_row_date(stock_rows, "stock_date"),
+            earliest_planned_date=_earliest_row_date(planned_rows, "available_date"),
+            reason_code=reason_code,
+        )
+        if pushed_out_text:
+            reason_text = f"{reason_text} {pushed_out_text}"
         contributing_reasons = _snapshot_contributing_reasons(
             schedule=schedule,
             last_bop=last_bop,
             deliveries=deliveries,
+            pushed_out_text=pushed_out_text,
         )
         if not contributing_reasons:
             contributing_reasons = _fallback_contributing_reason(reason_code, reason_text)

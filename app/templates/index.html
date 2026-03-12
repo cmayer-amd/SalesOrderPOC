@@ -1,68 +1,72 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="card">
-  <h2>Dataset Status</h2>
-  <div class="grid">
-    {% for key, value in dataset_counts.items() %}
-      <a class="pill pill-link" href="/datasets/{{ key }}"><strong>{{ key }}</strong><span>{{ value }}</span></a>
-    {% endfor %}
-  </div>
-</section>
-
-<section class="card">
-  <h2>Troubleshoot Query</h2>
-  <form method="get" class="search-form">
-    <label>
-      Sales Order
-      <input type="text" name="sales_order" value="{{ query.sales_order }}" placeholder="5000000042">
-    </label>
-    <label>
-      Customer
-      <input type="text" name="customer" value="{{ query.customer }}" placeholder="CUST-1001">
-    </label>
-    <label>
-      Part (Material)
-      <input type="text" name="material" value="{{ query.material }}" placeholder="MAT-006">
-    </label>
-    <label>
-      Plant (optional)
-      <input type="text" name="plant" value="{{ query.plant }}" placeholder="2020">
-    </label>
-    <label>
-      Snapshot Version
-      <select name="snapshot_date">
-        {% for snap in query.snapshot_versions %}
-          <option value="{{ snap }}" {% if query.snapshot_date == snap %}selected{% endif %}>{{ snap }}</option>
+<div class="index-layout">
+  <aside class="index-sidebar">
+    <section class="card dataset-sidebar-card">
+      <h2>Dataset Status</h2>
+      <div class="grid dataset-grid">
+        {% for key, value in dataset_counts.items() %}
+          <a class="pill pill-link" href="/datasets/{{ key }}"><strong>{{ key }}</strong><span>{{ value }}</span></a>
         {% endfor %}
-      </select>
-    </label>
-    <label>
-      Rows per page
-      <select name="page_size">
-        {% for size in [10, 25, 50] %}
-          <option value="{{ size }}" {% if query.page_size == size|string %}selected{% endif %}>{{ size }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label>
-      <span>Order readiness filter</span>
-      <div>
-        <input
-          type="checkbox"
-          name="only_not_fully_on_request_date"
-          value="1"
-          {% if query.only_not_fully_on_request_date == "1" %}checked{% endif %}
-        >
-        Only orders not fully scheduled on requested date
       </div>
-    </label>
-    <div class="actions">
-      <button type="submit">Run Query</button>
-      <a href="/">Clear</a>
-    </div>
-  </form>
-</section>
+    </section>
+  </aside>
+
+  <div class="index-main">
+    <section class="card">
+      <h2>Troubleshoot Query</h2>
+      <form method="get" class="search-form">
+        <label>
+          Sales Order
+          <input type="text" name="sales_order" value="{{ query.sales_order }}" placeholder="5000000042">
+        </label>
+        <label>
+          Customer
+          <input type="text" name="customer" value="{{ query.customer }}" placeholder="CUST-1001">
+        </label>
+        <label>
+          Part (Material)
+          <input type="text" name="material" value="{{ query.material }}" placeholder="MAT-006">
+        </label>
+        <label>
+          Plant (optional)
+          <input type="text" name="plant" value="{{ query.plant }}" placeholder="2020">
+        </label>
+        <label>
+          Snapshot Version
+          <select name="snapshot_date">
+            {% for snap in query.snapshot_versions %}
+              <option value="{{ snap }}" {% if query.snapshot_date == snap %}selected{% endif %}>{{ snap }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          Rows per page
+          <select name="page_size">
+            {% for size in [10, 25, 50] %}
+              <option value="{{ size }}" {% if query.page_size == size|string %}selected{% endif %}>{{ size }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Order readiness filter</span>
+          <div>
+            <input
+              type="checkbox"
+              name="only_not_fully_on_request_date"
+              value="1"
+              {% if query.only_not_fully_on_request_date == "1" %}checked{% endif %}
+            >
+            Only orders not fully scheduled on requested date
+          </div>
+        </label>
+        <div class="actions">
+          <button type="submit">Run Query</button>
+          <a href="/">Clear</a>
+        </div>
+      </form>
+    </section>
 
 {% if has_filters %}
 <section class="card">
@@ -191,4 +195,6 @@
     <p>No orders found. Add CSV files in `data/`.</p>
   {% endif %}
 </section>
+  </div>
+</div>
 {% endblock %}

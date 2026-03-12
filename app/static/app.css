@@ -40,6 +40,42 @@ body {
   gap: 0.5rem;
 }
 
+.index-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.index-sidebar {
+  position: sticky;
+  top: 1rem;
+}
+
+.dataset-grid {
+  grid-template-columns: 1fr;
+}
+
+.dataset-sidebar-card {
+  margin-bottom: 0;
+}
+
+.index-main .card {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .index-layout {
+    grid-template-columns: 1fr;
+  }
+  .index-sidebar {
+    position: static;
+  }
+  .dataset-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
 .pill {
   display: flex;
   justify-content: space-between;
