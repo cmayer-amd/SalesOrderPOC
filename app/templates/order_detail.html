@@ -10,44 +10,31 @@
 <div class="detail-layout">
   <aside class="detail-sidebar">
     <section class="card">
-      <h2>Opened from Query</h2>
-      {% if origin_sidebar_rows %}
-        <ul class="criteria-list">
-          {% for row in origin_sidebar_rows %}
-            <li><span class="criteria-label">{{ row.label }}:</span> <span>{{ row.value }}</span></li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="trace-empty">Opened directly without query filters.</p>
+      <h2>Sales Order {{ report.sales_order }}</h2>
+      <p>Customer: {{ report.header.customer }} | Region: {{ report.header.region }}</p>
+      {% if order_parts %}
+      <p>Parts in order: {{ order_parts | join(", ") }}</p>
       {% endif %}
+      <form method="get" class="snapshot-form">
+        {% for key, value in origin_hidden_fields.items() %}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+        {% endfor %}
+        <label>
+          Snapshot Version
+          <select name="snapshot_date" onchange="this.form.submit()">
+            {% for snap in snapshot_versions %}
+              <option value="{{ snap }}" {% if snapshot_date == snap %}selected{% endif %}>{{ snap }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </form>
+      <div class="actions mode-actions">
+        <span class="mode-link active">Snapshot (Last BOP Run)</span>
+      </div>
     </section>
   </aside>
 
   <div class="detail-main">
-<section class="card">
-  <h2>Sales Order {{ report.sales_order }}</h2>
-  <p>Customer: {{ report.header.customer }} | Region: {{ report.header.region }}</p>
-  {% if order_parts %}
-  <p>Parts in order: {{ order_parts | join(", ") }}</p>
-  {% endif %}
-  <form method="get" class="snapshot-form">
-    {% for key, value in origin_hidden_fields.items() %}
-    <input type="hidden" name="{{ key }}" value="{{ value }}">
-    {% endfor %}
-    <label>
-      Snapshot Version
-      <select name="snapshot_date" onchange="this.form.submit()">
-        {% for snap in snapshot_versions %}
-          <option value="{{ snap }}" {% if snapshot_date == snap %}selected{% endif %}>{{ snap }}</option>
-        {% endfor %}
-      </select>
-    </label>
-  </form>
-  <div class="actions mode-actions">
-    <span class="mode-link active">Snapshot (Last BOP Run)</span>
-  </div>
-</section>
-
 <section class="card">
   <h2>Schedule Analysis - Snapshot</h2>
   <div class="actions">
@@ -82,7 +69,9 @@
         <td>{{ r.item_number }}</td>
         <td class="code">{{ r.material }}</td>
         <td>{{ r.schedule_line }}</td>
-        <td class="code">{{ r.reason_label or r.reason_code }}</td>
+        <td class="trace-cell">
+          <span class="trace-chip code">{{ r.reason_label or r.reason_code }}</span>
+        </td>
         <td class="trace-cell">
           {% set reasons_view = r.contributing_labels if r.contributing_labels else r.contributing_reasons %}
           {% if reasons_view %}
