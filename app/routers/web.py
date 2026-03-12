@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -45,6 +45,59 @@ def get_snapshot_selection(snapshot_date: str | None) -> tuple[str, DataStore, l
     return selected, snapshot_store, snapshot_versions
 
 
+def _fit_mail_cell(value: object, max_len: int) -> str:
+    text = str(value or "")
+    if len(text) <= max_len:
+        return text
+    return f"{text[: max_len - 3]}..."
+
+
+def _grid_table_lines(headers: list[str], rows: list[list[str]]) -> list[str]:
+    widths = [len(h) for h in headers]
+    for row in rows:
+        for i, cell in enumerate(row):
+            widths[i] = max(widths[i], len(cell))
+
+    sep = "+" + "+".join("-" * (w + 2) for w in widths) + "+"
+    header_row = "| " + " | ".join(headers[i].ljust(widths[i]) for i in range(len(headers))) + " |"
+    lines = [sep, header_row, sep]
+    for row in rows:
+        lines.append("| " + " | ".join(row[i].ljust(widths[i]) for i in range(len(headers))) + " |")
+    lines.append(sep)
+    return lines
+
+
+def _origin_context_from_params(params: dict[str, str]) -> tuple[list[str], dict[str, str], str]:
+    src_map = {
+        "src_sales_order": (params.get("src_sales_order") or "").strip(),
+        "src_customer": (params.get("src_customer") or "").strip(),
+        "src_material": (params.get("src_material") or "").strip(),
+        "src_plant": (params.get("src_plant") or "").strip(),
+        "src_snapshot_date": (params.get("src_snapshot_date") or "").strip(),
+        "src_only_not_fully_on_request_date": (params.get("src_only_not_fully_on_request_date") or "").strip(),
+        "src_page": (params.get("src_page") or "").strip(),
+        "src_page_size": (params.get("src_page_size") or "").strip(),
+    }
+    compact = {k: v for k, v in src_map.items() if v}
+    chips: list[str] = []
+    if src_map["src_sales_order"]:
+        chips.append(f"SO={src_map['src_sales_order']}")
+    if src_map["src_customer"]:
+        chips.append(f"Customer={src_map['src_customer']}")
+    if src_map["src_material"]:
+        chips.append(f"Part={src_map['src_material']}")
+    if src_map["src_plant"]:
+        chips.append(f"Plant={src_map['src_plant']}")
+    if src_map["src_snapshot_date"]:
+        chips.append(f"Snapshot={src_map['src_snapshot_date']}")
+    if src_map["src_only_not_fully_on_request_date"] in {"1", "true", "yes", "on"}:
+        chips.append("Readiness filter=ON")
+    if src_map["src_page"] and src_map["src_page_size"]:
+        chips.append(f"Page={src_map['src_page']} (size {src_map['src_page_size']})")
+    suffix = f"&{urlencode(compact)}" if compact else ""
+    return chips, compact, suffix
+
+
 def _snapshot_review_mailto(report: dict[str, object]) -> str:
     sales_order = str(report.get("sales_order", ""))
     header = report.get("header", {}) if isinstance(report.get("header", {}), dict) else {}
@@ -74,6 +127,48 @@ def _snapshot_review_mailto(report: dict[str, object]) -> str:
         ]
     )
 
+    summary_headers = ["Field", "Value"]
+    summary_rows = [
+        ["Sales Order", _fit_mail_cell(sales_order, 24)],
+        ["Customer", _fit_mail_cell(header.get("customer", ""), 24)],
+        ["Region", _fit_mail_cell(header.get("region", ""), 24)],
+        ["Schedules", str(schedule_count)],
+        ["Unscheduled", str(unscheduled_count)],
+        ["Delayed", str(delayed_count)],
+    ]
+    schedule_headers = [
+        "Item",
+        "Part",
+        "Sch",
+        "Reason",
+        "Req Qty",
+        "Req Date",
+        "Conf Qty",
+        "Sched Date",
+        "Contrib",
+    ]
+    schedule_rows: list[list[str]] = []
+    for r in results:
+        if not isinstance(r, dict):
+            continue
+        contributing = r.get("contributing_reasons", [])
+        contributing_codes = ", ".join(
+            [str(c.get("code", "")) for c in contributing if isinstance(c, dict) and c.get("code", "")]
+        )
+        schedule_rows.append(
+            [
+                _fit_mail_cell(r.get("item_number", ""), 6),
+                _fit_mail_cell(r.get("material", ""), 12),
+                _fit_mail_cell(r.get("schedule_line", ""), 6),
+                _fit_mail_cell(r.get("reason_code", ""), 26),
+                _fit_mail_cell(r.get("requested_qty", ""), 8),
+                _fit_mail_cell(r.get("requested_date", ""), 10),
+                _fit_mail_cell(r.get("confirmed_qty", ""), 8),
+                _fit_mail_cell(r.get("schedule_date", ""), 10),
+                _fit_mail_cell(contributing_codes, 40),
+            ]
+        )
+
     lines = [
         "Hello Chris,",
         "",
@@ -81,34 +176,15 @@ def _snapshot_review_mailto(report: dict[str, object]) -> str:
         "",
         "ORDER SUMMARY",
         "-------------",
-        f"Sales Order : {sales_order}",
-        f"Customer    : {header.get('customer', '')}",
-        f"Region      : {header.get('region', '')}",
-        f"Schedules   : {schedule_count}",
-        f"Unscheduled : {unscheduled_count}",
-        f"Delayed     : {delayed_count}",
+        *_grid_table_lines(summary_headers, summary_rows),
         "",
         "SCHEDULE DETAILS",
         "----------------",
+        *_grid_table_lines(schedule_headers, schedule_rows),
+        "",
+        "Notes:",
     ]
-
-    for r in results:
-        if not isinstance(r, dict):
-            continue
-        contributing = r.get("contributing_reasons", [])
-        contributing_codes = ", ".join(
-            [c.get("code", "") for c in contributing if isinstance(c, dict) and c.get("code", "")]
-        )
-        lines.append(
-            f"- Item {r.get('item_number', '')} | Part {r.get('material', '')} | Schedule {r.get('schedule_line', '')}"
-        )
-        lines.append(f"  Reason      : {r.get('reason_code', '')}")
-        lines.append(f"  Requested   : Qty {r.get('requested_qty', '')}, Date {r.get('requested_date', '')}")
-        lines.append(f"  Scheduled   : Qty {r.get('confirmed_qty', '')}, Date {r.get('schedule_date', '')}")
-        if contributing_codes:
-            lines.append(f"  Contributing: {contributing_codes}")
-        lines.append("")
-
+    lines.append("- Grid table uses monospaced alignment for quick review.")
     lines.extend(["Regards,", "Sales Order Schedule Troubleshooter"])
     body = "\n".join(lines)
     return f"mailto:cmayer@amd.com?subject={quote(subject)}&body={quote(body)}"
@@ -139,6 +215,17 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
     except ValueError:
         page_size = 10
     page_size = min(max(page_size, 1), 50)
+    query_origin_params = {
+        "src_sales_order": sales_order,
+        "src_customer": customer,
+        "src_material": material,
+        "src_plant": plant,
+        "src_snapshot_date": selected_snapshot_date,
+        "src_only_not_fully_on_request_date": "1" if only_not_fully_on_request_date else "",
+        "src_page": str(page),
+        "src_page_size": str(page_size),
+    }
+    _, _, detail_link_suffix = _origin_context_from_params(query_origin_params)
 
     orders = snapshot_store.filter_sales_orders(
         sales_order=sales_order or None,
@@ -152,7 +239,7 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
     # route to the same detail UI users get from clicking the SO hyperlink.
     if sales_order and len(orders) == 1 and str(orders[0].get("sales_order", "")) == sales_order:
         return RedirectResponse(
-            url=f"/orders/{sales_order}?mode=snapshot&snapshot_date={selected_snapshot_date}",
+            url=f"/orders/{sales_order}?mode=snapshot&snapshot_date={selected_snapshot_date}{detail_link_suffix}",
             status_code=303,
         )
 
@@ -201,6 +288,7 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
             },
             "has_filters": has_filters,
             "query_report": query_report,
+            "detail_link_suffix": detail_link_suffix,
             "pagination": {
                 "page": page,
                 "page_size": page_size,
@@ -227,6 +315,9 @@ def order_detail(
     mode = (request.query_params.get("mode") or "snapshot").strip().lower()
     snapshot_date = (request.query_params.get("snapshot_date") or "").strip()
     selected_snapshot_date, snapshot_store, available_snapshot_versions = get_snapshot_selection(snapshot_date)
+    origin_context_chips, origin_hidden_fields, origin_query_suffix = _origin_context_from_params(
+        {k: (request.query_params.get(k) or "") for k in request.query_params.keys()}
+    )
     back_url = request.headers.get("referer", "/")
     bundle = snapshot_store.sales_order_bundle(so_number)
     if not bundle["header"]:
@@ -239,6 +330,9 @@ def order_detail(
                 "back_url": back_url,
                 "snapshot_date": selected_snapshot_date,
                 "snapshot_versions": available_snapshot_versions,
+                "origin_context_chips": origin_context_chips,
+                "origin_hidden_fields": origin_hidden_fields,
+                "origin_query_suffix": origin_query_suffix,
             },
             status_code=404,
         )
@@ -271,6 +365,9 @@ def order_detail(
             "order_parts": order_parts,
             "snapshot_date": selected_snapshot_date,
             "snapshot_versions": available_snapshot_versions,
+            "origin_context_chips": origin_context_chips,
+            "origin_hidden_fields": origin_hidden_fields,
+            "origin_query_suffix": origin_query_suffix,
         },
     )
 

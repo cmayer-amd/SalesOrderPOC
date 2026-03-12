@@ -93,7 +93,7 @@
         {% set is_unscheduled = (not row.schedule_date) or (row.reason_code and row.reason_code[:11] == "NO_SCHEDULE") %}
         {% set is_delayed = row.schedule_date and row.requested_date and row.schedule_date > row.requested_date %}
         <tr class="{% if is_unscheduled %}row-unscheduled{% elif is_delayed %}row-delayed{% endif %}">
-          <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}">{{ row.sales_order }}</a></td>
+          <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}{{ detail_link_suffix }}">{{ row.sales_order }}</a></td>
           <td>{{ row.item_number }}</td>
           <td>{{ row.schedule_line }}</td>
           <td class="code">{{ row.reason_code }}</td>
@@ -160,7 +160,7 @@
       <tbody>
       {% for row in orders %}
         <tr class="{{ row.get('row_class', '') }}">
-          <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}">{{ row.sales_order }}</a></td>
+          <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}{{ detail_link_suffix }}">{{ row.sales_order }}</a></td>
           <td class="code">{{ row.parts }}</td>
           <td>{{ row.customer }}</td>
           <td>{{ row.region }}</td>

@@ -10,11 +10,17 @@
 <section class="card">
   <h2>Sales Order {{ report.sales_order }}</h2>
   <p>Customer: {{ report.header.customer }} | Region: {{ report.header.region }}</p>
+  {% if origin_context_chips %}
+  <p class="query-context"><strong>Opened from query:</strong> {{ origin_context_chips | join(" | ") }}</p>
+  {% endif %}
   {% if order_parts %}
   <p>Parts in order: {{ order_parts | join(", ") }}</p>
   {% endif %}
   <form method="get" class="snapshot-form">
     <input type="hidden" name="mode" value="{{ mode }}">
+    {% for key, value in origin_hidden_fields.items() %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endfor %}
     <label>
       Snapshot Version
       <select name="snapshot_date" onchange="this.form.submit()">
@@ -25,8 +31,8 @@
     </label>
   </form>
   <div class="actions mode-actions">
-    <a class="mode-link {% if mode != 'current' %}active{% endif %}" href="/orders/{{ report.sales_order }}?mode=snapshot&snapshot_date={{ snapshot_date }}">Snapshot (Last BOP Run)</a>
-    <a class="mode-link {% if mode == 'current' %}active{% endif %}" href="/orders/{{ report.sales_order }}?mode=current&snapshot_date={{ snapshot_date }}">Check Current State</a>
+    <a class="mode-link {% if mode != 'current' %}active{% endif %}" href="/orders/{{ report.sales_order }}?mode=snapshot&snapshot_date={{ snapshot_date }}{{ origin_query_suffix }}">Snapshot (Last BOP Run)</a>
+    <a class="mode-link {% if mode == 'current' %}active{% endif %}" href="/orders/{{ report.sales_order }}?mode=current&snapshot_date={{ snapshot_date }}{{ origin_query_suffix }}">Check Current State</a>
   </div>
 </section>
 
