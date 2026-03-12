@@ -316,6 +316,26 @@ def order_detail(
     origin_context_chips, origin_hidden_fields, origin_query_suffix = _origin_context_from_params(
         {k: (request.query_params.get(k) or "") for k in request.query_params.keys()}
     )
+    sidebar_rows: list[dict[str, str]] = []
+    sidebar_label_map = [
+        ("Sales Order", "src_sales_order"),
+        ("Customer", "src_customer"),
+        ("Part (Material)", "src_material"),
+        ("Plant", "src_plant"),
+        ("Snapshot Version", "src_snapshot_date"),
+        ("Page", "src_page"),
+        ("Rows per page", "src_page_size"),
+    ]
+    for label, key in sidebar_label_map:
+        value = str(origin_hidden_fields.get(key, "") or "").strip()
+        if value:
+            sidebar_rows.append({"label": label, "value": value})
+    readiness_raw = str(origin_hidden_fields.get("src_only_not_fully_on_request_date", "") or "").strip().lower()
+    if readiness_raw in {"1", "true", "yes", "on"}:
+        sidebar_rows.append({"label": "Readiness filter", "value": "Only orders not fully scheduled on requested date"})
+    elif "src_only_not_fully_on_request_date" in origin_hidden_fields:
+        sidebar_rows.append({"label": "Readiness filter", "value": "Off"})
+
     back_url = request.headers.get("referer", "/")
     bundle = snapshot_store.sales_order_bundle(so_number)
     if not bundle["header"]:
@@ -331,6 +351,7 @@ def order_detail(
                 "origin_context_chips": origin_context_chips,
                 "origin_hidden_fields": origin_hidden_fields,
                 "origin_query_suffix": origin_query_suffix,
+                "origin_sidebar_rows": sidebar_rows,
             },
             status_code=404,
         )
@@ -360,6 +381,7 @@ def order_detail(
             "origin_context_chips": origin_context_chips,
             "origin_hidden_fields": origin_hidden_fields,
             "origin_query_suffix": origin_query_suffix,
+            "origin_sidebar_rows": sidebar_rows,
         },
     )
 

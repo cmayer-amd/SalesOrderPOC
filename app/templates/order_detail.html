@@ -7,6 +7,23 @@
   <p>{{ error }}</p>
 </section>
 {% else %}
+<div class="detail-layout">
+  <aside class="detail-sidebar">
+    <section class="card">
+      <h2>Filter Criteria</h2>
+      {% if origin_sidebar_rows %}
+        <ul class="criteria-list">
+          {% for row in origin_sidebar_rows %}
+            <li><span class="criteria-label">{{ row.label }}:</span> <span>{{ row.value }}</span></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="trace-empty">Opened directly without query filters.</p>
+      {% endif %}
+    </section>
+  </aside>
+
+  <div class="detail-main">
 <section class="card">
   <h2>Sales Order {{ report.sales_order }}</h2>
   <p>Customer: {{ report.header.customer }} | Region: {{ report.header.region }}</p>
@@ -116,5 +133,7 @@
     </div>
   {% endfor %}
 </section>
+  </div>
+</div>
 {% endif %}
 {% endblock %}

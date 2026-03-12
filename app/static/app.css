@@ -64,11 +64,46 @@ body {
   margin-bottom: 1rem;
 }
 
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(230px, 280px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.detail-sidebar {
+  position: sticky;
+  top: 1rem;
+}
+
+.detail-main .card {
+  margin-bottom: 1rem;
+}
+
+.criteria-list {
+  margin: 0.2rem 0 0;
+  padding-left: 1rem;
+}
+
+.criteria-list li {
+  margin-bottom: 0.35rem;
+}
+
+.criteria-label {
+  font-weight: 700;
+}
+
 @media (max-width: 1024px) {
   .index-layout {
     grid-template-columns: 1fr;
   }
   .index-sidebar {
+    position: static;
+  }
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+  .detail-sidebar {
     position: static;
   }
   .dataset-grid {
