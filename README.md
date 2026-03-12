@@ -91,6 +91,24 @@ Open:
 - OpenAPI: `http://127.0.0.1:8000/docs`
 - Dataset raw view example: `http://127.0.0.1:8000/datasets/sales_orders`
 
+## Run in GitHub Codespaces
+
+1. Open your repo on GitHub:
+   - `https://github.com/cmayer-amd/SalesOrderPOC`
+2. Click **Code** -> **Codespaces** -> **Create codespace on main**.
+3. Wait for the dev container to finish setup (dependencies are installed automatically from `requirements.txt`).
+4. In the Codespace terminal, run:
+
+```bash
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+5. Open the forwarded port `8000` URL in the Codespace browser preview.
+
+Notes:
+- `.devcontainer/devcontainer.json` is included to preconfigure Python 3.12 and port forwarding.
+- The app runs with Linux shell commands in Codespaces (not the Windows PowerShell scripts).
+
 ## Dataset inspection (read-only)
 
 - The **Dataset Status** tiles on `/` are clickable.

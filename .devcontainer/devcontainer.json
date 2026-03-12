@@ -1,0 +1,21 @@
+{
+  "name": "SalesOrderPOC Codespace",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bullseye",
+  "postCreateCommand": "python -m pip install --upgrade pip && pip install -r requirements.txt",
+  "forwardPorts": [
+    8000
+  ],
+  "portsAttributes": {
+    "8000": {
+      "label": "Sales Order Troubleshooter",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    }
+  }
+}
