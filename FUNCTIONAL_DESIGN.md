@@ -339,6 +339,16 @@ Data includes scenarios for:
 - LAN share URL format:
   - `http://<host-ip>:8000`
 - Firewall/network policy may be required for coworker access.
+- Cloud-hosted share URL (Render):
+  - `https://sales-order-poc.onrender.com/`
+
+Render deployment/runtime compatibility rule:
+
+- Render service must run Python `3.12.8` for dependency compatibility (`pydantic-core` wheel path).
+- Runtime pin is configured in both:
+  - `runtime.txt`
+  - `render.yaml` (`PYTHON_VERSION=3.12.8`)
+- If a deploy attempts Python `3.14`, run **Manual Deploy -> Clear build cache & deploy** in Render.
 
 ### BOP Failure Handling Constraint
 
@@ -347,6 +357,10 @@ BOP FAILED is not treated as a valid business error condition in this tool. Any 
 ### Snapshot Review Mail Constraint
 
 The snapshot page includes a support-mail action labeled `Email PLPC Support`, which opens a prefilled email to `cmayer@amd.com`. The email body is intentionally human-readable and includes both an order summary and schedule-line detail rows (including item, part, and schedule references) for support review.
+
+### Documentation in App Constraint
+
+Project documents are exposed in-app under `/documents` and rendered from repository markdown files. Any update to `README.md`, `FUNCTIONAL_DESIGN.md`, `SCENARIO_TEST_PLAN.md`, or `POC_MANAGEMENT_ONE_PAGER.md` must be visible through this route after redeploy/restart.
 
 ## 14. Backout / Revert Strategy
 

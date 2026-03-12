@@ -17,6 +17,7 @@ Teams currently spend significant time manually tracing schedule outcomes across
 - Read-only raw dataset inspection for audit and transparency
 - Snapshot support workflow via `Email PLPC Support` with human-readable prefilled details
 - Stable one-command start/restart operations for fast redeploy
+- Cloud deployment path from GitHub to Render with public share URL
 
 ## Data Scope in POC
 
@@ -50,6 +51,12 @@ The POC runs on flat-file datasets (50 order headers plus related item/schedule/
 - No live SAP integration yet (no direct RFC/OData reads)
 - No role-based access control
 - No persistent historical data store beyond current flat files
+
+## Deployment Readiness Note
+
+- Public cloud endpoint target: `https://sales-order-poc.onrender.com/`
+- Runtime compatibility requires Python `3.12.8` (configured in `render.yaml` and `runtime.txt`)
+- If deployment fails with `pydantic-core`/`maturin` build errors, run Render **Manual Deploy** with **Clear build cache & deploy**
 
 ## Recommended Next Steps
 

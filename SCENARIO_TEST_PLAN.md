@@ -46,6 +46,7 @@ Representative order examples from test data are included below.
 | S13 | Dataset status drill-down | `/datasets/{name}` | read-only raw table per dataset |
 | S14 | Snapshot support email workflow | Snapshot order page | `Email PLPC Support` mailto with readable details |
 | S15 | Docs usability | `/docs` | visible Home link on right side |
+| S16 | Render deploy runtime compatibility | Render build/deploy logs | service runs on Python 3.12.8 and health check passes |
 
 ---
 
@@ -231,6 +232,17 @@ Representative order examples from test data are included below.
   - `/docs` and `/api-docs-internal` both accessible.
 - **Expected**: Docs remain usable with explicit app navigation.
 
+## S16 - Render Deploy Runtime Compatibility
+- **Objective**: Prevent cloud deploy failures caused by incompatible Python runtime selection.
+- **TUT**
+  - Validate deployment config includes runtime pin in both `runtime.txt` and `render.yaml` (`PYTHON_VERSION=3.12.8`).
+- **FUT**
+  - Trigger deploy and confirm app serves home page and `/api/health`.
+- **Integration checks**
+  - Inspect Render logs to confirm Python runtime is `3.12.8` and no `pydantic-core`/`maturin` metadata-generation failure occurs.
+  - If stale cache causes wrong runtime selection, run **Manual Deploy -> Clear build cache & deploy** and re-validate health.
+- **Expected**: Successful build/deploy with healthy service endpoint.
+
 ---
 
 ## 5) Future SAP-Connected Validation Addendum
@@ -259,7 +271,7 @@ When integrating this POC with SAP S/4HANA (PS4/QS4/DS4), extend each scenario w
 
 The POC scenario test cycle is complete when:
 
-- All 15 scenarios pass TUT + FUT checks.
+- All 16 scenarios pass TUT + FUT checks.
 - API and web outputs are consistent for equivalent queries.
 - No final output contains `NO_SCHEDULE_BOP_FAILED` or `BOP_FAILED`.
 - Delayed stock/planned-order cases include explicit push-out explanation.

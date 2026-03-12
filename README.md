@@ -123,7 +123,20 @@ To run the app from your GitHub repo and share a public app URL:
 Notes:
 - The app health check is configured at `/api/health`.
 - Every push to `main` auto-deploys by default (`autoDeploy: true` in `render.yaml`).
-- Python runtime is pinned with `runtime.txt` (`python-3.12.8`) for dependency compatibility.
+- Python runtime is pinned to `3.12.8` in both:
+  - `runtime.txt`
+  - `render.yaml` via `envVars: PYTHON_VERSION=3.12.8`
+
+### Render build recovery note (`pydantic-core` / `maturin`)
+
+If Render logs show Python `3.14` and fails while building `pydantic-core` with Rust/maturin, the service is not using the intended runtime yet.
+
+Use this recovery sequence:
+
+1. Open the Render service (`sales-order-poc`).
+2. Trigger **Manual Deploy**.
+3. Select **Clear build cache & deploy**.
+4. Verify health endpoint after deploy: `https://sales-order-poc.onrender.com/api/health`.
 
 ## Dataset inspection (read-only)
 
@@ -178,6 +191,8 @@ Notes:
 
 - Functional design: `FUNCTIONAL_DESIGN.md`
 - Management summary: `POC_MANAGEMENT_ONE_PAGER.md`
+- Scenario test plan: `SCENARIO_TEST_PLAN.md`
+- In-app documents hub: `/documents`
 
 ## Current-state feasibility semantics
 
