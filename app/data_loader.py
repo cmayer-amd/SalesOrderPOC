@@ -107,20 +107,25 @@ class DataStore:
 
         df = self.sales_orders.copy()
         if sales_order:
-            df = df[df["sales_order"].astype(str).str.contains(sales_order, na=False)]
-        if customer:
-            df = df[df["customer"] == customer]
+            # Keep SO query behavior consistent with detail-link navigation.
+            df = df[df["sales_order"].astype(str) == sales_order]
 
-        if material or plant:
-            if self.sales_order_items.empty:
-                return []
-            items = self.sales_order_items.copy()
-            if material:
-                items = items[items["material"] == material]
-            if plant:
-                items = items[items["plant"] == plant]
-            allowed_orders = set(items["sales_order"].tolist())
-            df = df[df["sales_order"].isin(allowed_orders)]
+        # If an SO is explicitly provided, treat it as the primary selector
+        # so text-box query flow matches SO hyperlink drilldown behavior.
+        if not sales_order:
+            if customer:
+                df = df[df["customer"] == customer]
+
+            if material or plant:
+                if self.sales_order_items.empty:
+                    return []
+                items = self.sales_order_items.copy()
+                if material:
+                    items = items[items["material"] == material]
+                if plant:
+                    items = items[items["plant"] == plant]
+                allowed_orders = set(items["sales_order"].tolist())
+                df = df[df["sales_order"].isin(allowed_orders)]
 
         if only_not_fully_on_request_date:
             allowed_orders = self.not_fully_scheduled_on_request_date_order_set()

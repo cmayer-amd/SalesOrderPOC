@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.data_loader import DataStore
@@ -147,6 +147,14 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
         plant=plant or None,
         only_not_fully_on_request_date=only_not_fully_on_request_date,
     )
+
+    # When SO is typed in the query box and resolves to one exact order,
+    # route to the same detail UI users get from clicking the SO hyperlink.
+    if sales_order and len(orders) == 1 and str(orders[0].get("sales_order", "")) == sales_order:
+        return RedirectResponse(
+            url=f"/orders/{sales_order}?mode=snapshot&snapshot_date={selected_snapshot_date}",
+            status_code=303,
+        )
 
     query_report = None
     if has_filters:
