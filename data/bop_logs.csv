@@ -1,0 +1,9 @@
+bop_log_id,sales_order,item_number,schedule_line,bop_variant,bop_status,confirmed_qty_after_bop,bop_message,log_timestamp
+BOP000001,5000000020,000010,0001,AMD_WEEKLY,SUCCESS,20,BOP adjusted to allocation remaining quantity,2026-02-02T10:10:00
+BOP000002,5000000023,000010,0001,AMD_WEEKLY,PARTIAL,0,Allocation exhausted after BOP sequence,2026-02-05T10:12:00
+BOP000003,5000000031,000010,0001,AMD_PRIORITY,SUCCESS,25,Specific customer-soldto-shipto allocation selected,2026-02-17T11:00:00
+BOP000004,5000000042,000010,0001,AMD_WEEKLY,PARTIAL,0,No feasible supply found during BOP reprioritization,2026-03-04T09:00:00
+BOP000005,5000000043,000010,0001,AMD_WEEKLY,PARTIAL,0,No feasible supply found during BOP reprioritization,2026-03-05T09:05:00
+BOP000006,5000000044,000010,0001,AMD_PRIORITY,PARTIAL,0,No feasible supply found during BOP reprioritization,2026-03-06T09:10:00
+BOP000007,5000000045,000010,0001,AMD_PRIORITY,PARTIAL,0,No feasible supply found during BOP reprioritization,2026-03-09T09:15:00
+BOP000008,5000000048,000020,0001,AMD_WEEKLY,PARTIAL,0,No feasible supply found during BOP reprioritization,2026-03-12T09:20:00

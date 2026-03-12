@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>Dataset Status</h2>
+  <div class="grid">
+    {% for key, value in dataset_counts.items() %}
+      <a class="pill pill-link" href="/datasets/{{ key }}"><strong>{{ key }}</strong><span>{{ value }}</span></a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>Troubleshoot Query</h2>
+  <form method="get" class="search-form">
+    <label>
+      Sales Order
+      <input type="text" name="sales_order" value="{{ query.sales_order }}" placeholder="5000000042">
+    </label>
+    <label>
+      Customer
+      <input type="text" name="customer" value="{{ query.customer }}" placeholder="CUST-1001">
+    </label>
+    <label>
+      Part (Material)
+      <input type="text" name="material" value="{{ query.material }}" placeholder="MAT-006">
+    </label>
+    <label>
+      Plant (optional)
+      <input type="text" name="plant" value="{{ query.plant }}" placeholder="2020">
+    </label>
+    <label>
+      Snapshot Version
+      <select name="snapshot_date">
+        {% for snap in query.snapshot_versions %}
+          <option value="{{ snap }}" {% if query.snapshot_date == snap %}selected{% endif %}>{{ snap }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Rows per page
+      <select name="page_size">
+        {% for size in [10, 25, 50] %}
+          <option value="{{ size }}" {% if query.page_size == size|string %}selected{% endif %}>{{ size }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Order readiness filter</span>
+      <div>
+        <input
+          type="checkbox"
+          name="only_not_fully_on_request_date"
+          value="1"
+          {% if query.only_not_fully_on_request_date == "1" %}checked{% endif %}
+        >
+        Only orders not fully scheduled on requested date
+      </div>
+    </label>
+    <div class="actions">
+      <button type="submit">Run Query</button>
+      <a href="/">Clear</a>
+    </div>
+  </form>
+</section>
+
+{% if has_filters %}
+<section class="card">
+  <h2>Schedule Reasons (Filtered Results)</h2>
+  {% if query_report and query_report.results %}
+    <p>
+      Matching orders: <strong>{{ query_report.count_orders }}</strong> |
+      Matching schedules: <strong>{{ query_report.count_schedules }}</strong>
+    </p>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Sales Order</th>
+          <th>Item</th>
+          <th>Schedule</th>
+          <th>Reason Code</th>
+          <th>Contributing Reasons</th>
+          <th>Reason Text</th>
+          <th>Req Qty</th>
+          <th>Conf Qty</th>
+          <th>Req Date</th>
+          <th>Sched Date</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in query_report.results %}
+        {% set is_unscheduled = (not row.schedule_date) or (row.reason_code and row.reason_code[:11] == "NO_SCHEDULE") %}
+        {% set is_delayed = row.schedule_date and row.requested_date and row.schedule_date > row.requested_date %}
+        <tr class="{% if is_unscheduled %}row-unscheduled{% elif is_delayed %}row-delayed{% endif %}">
+          <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}">{{ row.sales_order }}</a></td>
+          <td>{{ row.item_number }}</td>
+          <td>{{ row.schedule_line }}</td>
+          <td class="code">{{ row.reason_code }}</td>
+          <td>
+            {% if row.contributing_reasons %}
+              {% for cr in row.contributing_reasons %}
+                <div class="code">{{ cr.code }}</div>
+              {% endfor %}
+            {% endif %}
+          </td>
+          <td>{{ row.reason_text }}</td>
+          <td>{{ row.requested_qty }}</td>
+          <td>{{ row.confirmed_qty }}</td>
+          <td>{{ row.requested_date }}</td>
+          <td>{{ row.schedule_date }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  {% else %}
+    <p>No matching schedule reasons found for the provided filter values.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Sales Orders{% if has_filters %} (Filtered){% endif %}</h2>
+  {% if pagination.total_orders > 0 %}
+    <p>
+      Showing up to <strong>{{ pagination.page_size }}</strong> per page |
+      Page <strong>{{ pagination.page }}</strong> of <strong>{{ pagination.total_pages }}</strong>
+    </p>
+  {% endif %}
+  {% if orders %}
+    <div class="actions pagination-actions">
+      {% if pagination.has_prev %}
+        <a class="page-nav-link" aria-label="First page" title="First page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page=1">&laquo;</a>
+        <a class="page-nav-link" aria-label="Previous page" title="Previous page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page={{ pagination.prev_page }}">&lsaquo;</a>
+      {% else %}
+        <span class="page-nav-link disabled" aria-hidden="true">&laquo;</span>
+        <span class="page-nav-link disabled" aria-hidden="true">&lsaquo;</span>
+      {% endif %}
+      {% if pagination.has_next %}
+        <a class="page-nav-link" aria-label="Next page" title="Next page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page={{ pagination.next_page }}">&rsaquo;</a>
+        <a class="page-nav-link" aria-label="Last page" title="Last page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page={{ pagination.total_pages }}">&raquo;</a>
+      {% else %}
+        <span class="page-nav-link disabled" aria-hidden="true">&rsaquo;</span>
+        <span class="page-nav-link disabled" aria-hidden="true">&raquo;</span>
+      {% endif %}
+    </div>
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Sales Order</th>
+          <th>Part(s)</th>
+          <th>Customer</th>
+          <th>Region</th>
+          <th>Requested Date</th>
+          <th>Scenario</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in orders %}
+        <tr class="{{ row.get('row_class', '') }}">
+          <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}">{{ row.sales_order }}</a></td>
+          <td class="code">{{ row.parts }}</td>
+          <td>{{ row.customer }}</td>
+          <td>{{ row.region }}</td>
+          <td>{{ row.requested_delivery_date }}</td>
+          <td>{{ row.scenario }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <div class="actions pagination-actions">
+      {% if pagination.has_prev %}
+        <a class="page-nav-link" aria-label="First page" title="First page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page=1">&laquo;</a>
+        <a class="page-nav-link" aria-label="Previous page" title="Previous page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page={{ pagination.prev_page }}">&lsaquo;</a>
+      {% else %}
+        <span class="page-nav-link disabled" aria-hidden="true">&laquo;</span>
+        <span class="page-nav-link disabled" aria-hidden="true">&lsaquo;</span>
+      {% endif %}
+      {% if pagination.has_next %}
+        <a class="page-nav-link" aria-label="Next page" title="Next page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page={{ pagination.next_page }}">&rsaquo;</a>
+        <a class="page-nav-link" aria-label="Last page" title="Last page" href="/?sales_order={{ query.sales_order }}&customer={{ query.customer }}&material={{ query.material }}&plant={{ query.plant }}&snapshot_date={{ query.snapshot_date }}&only_not_fully_on_request_date={{ query.only_not_fully_on_request_date }}&page_size={{ pagination.page_size }}&page={{ pagination.total_pages }}">&raquo;</a>
+      {% else %}
+        <span class="page-nav-link disabled" aria-hidden="true">&rsaquo;</span>
+        <span class="page-nav-link disabled" aria-hidden="true">&raquo;</span>
+      {% endif %}
+    </div>
+  {% else %}
+    <p>No orders found. Add CSV files in `data/`.</p>
+  {% endif %}
+</section>
+{% endblock %}

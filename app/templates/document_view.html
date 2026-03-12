@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>{{ doc_title }}</h2>
+  <p>File: <span class="code">{{ doc_path }}</span></p>
+  <div class="actions">
+    <a href="/">Home</a>
+    <a href="/documents">Documents</a>
+  </div>
+</section>
+
+<section class="card doc-content-card">
+  <article id="doc-rendered" class="doc-rendered">Loading document preview...</article>
+  <script id="doc-markdown" type="text/plain">{{ doc_content }}</script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    (function () {
+      const sourceEl = document.getElementById("doc-markdown");
+      const targetEl = document.getElementById("doc-rendered");
+      if (!sourceEl || !targetEl || typeof marked === "undefined") {
+        if (targetEl && sourceEl) {
+          targetEl.textContent = sourceEl.textContent || "";
+        }
+        return;
+      }
+      marked.setOptions({
+        gfm: true,
+        breaks: false,
+      });
+      const markdown = sourceEl.textContent || "";
+      targetEl.innerHTML = marked.parse(markdown);
+    })();
+  </script>
+</section>
+{% endblock %}

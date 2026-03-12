@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>Project Documents</h2>
+  <p>Open a document below to view its complete contents.</p>
+  <div class="actions">
+    <a href="/">Home</a>
+  </div>
+</section>
+
+<section class="card">
+  <div class="grid">
+    {% for doc in documents %}
+      <a class="pill pill-link" href="/documents/{{ doc.key }}">
+        <strong>{{ doc.title }}</strong>
+        <span class="code">{{ doc.path }}</span>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
