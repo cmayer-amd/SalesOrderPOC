@@ -10,7 +10,7 @@ The tool supports:
 - Line item level analysis
 - Schedule line level analysis
 - Multi-factor reason trace (not only a single cause)
-- Snapshot vs current-state comparison
+- Snapshot-based analysis (single mode)
 
 This is designed for S/4HANA-style ATP/AATP reasoning with AMD-oriented concepts:
 
@@ -30,9 +30,7 @@ This is designed for S/4HANA-style ATP/AATP reasoning with AMD-oriented concepts
 - Highlight business-critical rows:
   - Unscheduled rows
   - Delayed rows (schedule date > requested date)
-- Compare:
-  - Snapshot (last run / last BOP context)
-  - Current state (recomputed with current data picture)
+- Analyze snapshot state (last run / last BOP context) only.
 - Provide API and web UI access.
 - Support sharing via LAN URL.
 
@@ -55,10 +53,7 @@ This is designed for S/4HANA-style ATP/AATP reasoning with AMD-oriented concepts
 1. User searches by sales order, customer, or material.
 2. Tool returns matching schedules and reason outcomes.
 3. User drills into order detail.
-4. User selects:
-   - Snapshot mode to see last-run perspective
-   - Current check mode to see current feasibility
-5. User reviews primary reason + contributing reason trace.
+4. User reviews primary reason + contributing reason trace.
 
 ## 5. High-Level Architecture
 
@@ -163,28 +158,9 @@ Example:
   - `NO_SUPPLY_SOURCE_PLANT`
   - `DELIVERY_IN_PROCESS`
 
-## 7.3 Snapshot vs Current Modes
-
-### Snapshot Mode
+## 7.3 Snapshot Mode
 
 Use saved schedule and last BOP context as historical status.
-
-### Current Mode
-
-Recompute against current data files and compare with snapshot.
-
-Per schedule line, return:
-
-- Snapshot reason/date/qty
-- Current reason/date/qty
-- `can_meet_requested_date_now` (true/false)
-- `status_changed` (true/false)
-- `checked_at` timestamp
-
-Current-mode feasibility rule:
-
-- `can_meet_requested_date_now = true` only if current outcome is schedulable (not `NO_SCHEDULE*`) and current/projection date is on or before requested date.
-- When current confirmation fully covers requested quantity, current check projects schedule date to requested date to reflect immediate feasibility.
 
 ## 8. UI Functional Design
 
@@ -222,22 +198,21 @@ Pagination controls:
 
 Controls:
 
-- `Snapshot (Last BOP Run)` button
-- `Check Current State` button
+- `Snapshot (Last BOP Run)` state indicator
 - `Home` and `Back` links in Schedule Analysis section
-- Snapshot-only support action: `Email PLPC Support`
+- Snapshot support action: `Email PLPC Support`
 
 Tables:
 
-- Snapshot columns always shown
-- Current columns shown in current mode
+- Snapshot columns shown
 - Schedule table includes a `Part` column at line level
 
 Panels:
 
-- Reason Trace panel in snapshot mode with ordered reason list
+- Reason Trace panel with ordered reason list
 - Snapshot mail action provides prefilled, human-readable review details to PLPC support
 - Order header shows `Parts in order` to represent multi-line, multi-part orders
+- Left sidebar shows opened-from query filter criteria for drill-down context
 
 Highlights:
 
@@ -253,13 +228,13 @@ Highlights:
 - `GET /api/sales-orders/{so_number}`
 - `GET /api/sales-orders/{so_number}/items/{item_number}`
 - `GET /api/sales-orders/{so_number}/items/{item_number}/schedules/{schedule_line}`
-- `GET /api/troubleshoot/{so_number}?mode=snapshot|current|legacy`
+- `GET /api/troubleshoot/{so_number}` (snapshot output)
 - `GET /api/troubleshoot?sales_order=&customer=&material=&plant=`
 
 ### Web Endpoints
 
 - `GET /` home, query, and dataset status
-- `GET /orders/{so_number}` order detail, snapshot/current modes
+- `GET /orders/{so_number}` order detail, snapshot mode
 - `GET /datasets/{dataset_name}` read-only raw dataset inspection
 
 ### Response Expectations
@@ -270,7 +245,7 @@ Highlights:
   - requested/confirmed qty and dates
   - evidence blocks
   - contributing reasons
-- Current mode adds snapshot vs current comparison fields.
+- UI labels are normalized for readability (shortened, no underscores), while API reason codes remain canonical.
 
 ## 10. Highlighting and UX Rules
 
@@ -313,7 +288,7 @@ Data includes scenarios for:
 - Reason precedence tests
 - Allocation hierarchy matching tests
 - Multi-factor composition tests
-- Snapshot vs current comparison tests
+- Snapshot reason and precedence tests
 
 ### FUT (Functional Unit Tests)
 
@@ -322,7 +297,7 @@ Data includes scenarios for:
 - Highlight behavior:
   - unscheduled
   - delayed
-- Snapshot/current toggle behavior
+- Snapshot detail and reason-trace behavior
 
 ### Integration-Style Checks
 
@@ -366,21 +341,21 @@ Project documents are exposed in-app under `/documents` and rendered from reposi
 
 Changes were designed to be easy to reverse:
 
-- Snapshot/current mode logic isolated in `app/reason_engine.py`
-- UI mode controls isolated in `app/templates/order_detail.html`
-- API mode switch isolated in `app/routers/api.py`
+- Snapshot reason logic isolated in `app/reason_engine.py`
+- Query-context sidebar and detail layout isolated in `app/templates/order_detail.html`
+- Snapshot troubleshoot endpoint behavior isolated in `app/routers/api.py`
 - New dataset `plant_substitutions.csv` is additive only
 
 To back out:
 
-1. Remove mode switch UI and current-check columns.
-2. Route detail and API troubleshoot calls to legacy mode only.
-3. Keep baseline query and troubleshooting features unchanged.
+1. Re-enable alternate mode controls in `app/templates/order_detail.html`.
+2. Reintroduce mode branching in `app/routers/web.py` and `app/routers/api.py`.
+3. Keep baseline query and snapshot troubleshooting features unchanged.
 
 ## 15. Handoff Checklist
 
 - [ ] Confirm coworker can access shared URL.
-- [ ] Validate snapshot/current comparison on at least 3 orders.
+- [ ] Validate snapshot output on at least 3 delayed orders.
 - [ ] Validate unscheduled and delayed highlights on home and detail pages.
 - [ ] Validate multi-factor reason trace for blocked/no-supply order.
 - [ ] Validate plant substitution scenario.

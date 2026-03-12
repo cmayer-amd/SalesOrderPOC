@@ -100,11 +100,11 @@
           <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}{{ detail_link_suffix }}">{{ row.sales_order }}</a></td>
           <td>{{ row.item_number }}</td>
           <td>{{ row.schedule_line }}</td>
-          <td class="code">{{ row.reason_code }}</td>
+          <td class="code">{{ row.reason_label or row.reason_code }}</td>
           <td>
-            {% if row.contributing_reasons %}
-              {% for cr in row.contributing_reasons %}
-                <div class="code">{{ cr.code }}</div>
+            {% if row.contributing_labels %}
+              {% for cr in row.contributing_labels %}
+                <div class="code">{{ cr.label }}</div>
               {% endfor %}
             {% endif %}
           </td>

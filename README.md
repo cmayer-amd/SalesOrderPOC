@@ -194,10 +194,26 @@ Use this recovery sequence:
 - Scenario test plan: `SCENARIO_TEST_PLAN.md`
 - In-app documents hub: `/documents`
 
-## Current-state feasibility semantics
+## Snapshot-only behavior
 
-- In current check mode, the API/UI return `can_meet_requested_date_now`.
-- This is true only when:
-  - current reason is not a `NO_SCHEDULE*` outcome, and
-  - current schedule date is on/before requested date.
-- For comparison behavior, current check projects a schedule date to requested date when current confirmed quantity fully covers requested quantity.
+- The application operates on snapshot datasets only (no current-state mode).
+- Order detail is always rendered as `Snapshot (Last BOP Run)`.
+- `GET /api/troubleshoot/{so_number}` returns snapshot analysis regardless of legacy/current query params.
+
+## UI label normalization
+
+- UI reason labels are shown in shortened readable form without underscore formatting.
+- Raw technical reason codes are preserved in API payloads.
+- Examples:
+  - `PARTIAL_STOCK_PLANNED_ORDER` -> `Stock + Planned`
+  - `NO_SCHEDULE_NO_SUPPLY` -> `No Supply`
+  - `SCHEDULE_PUSHED_OUT` -> `Pushed Out`
+
+## Documentation consolidation
+
+- Core handoff docs are kept in four markdown artifacts:
+  - `README.md` (run/deploy/usage)
+  - `FUNCTIONAL_DESIGN.md` (behavior and rules)
+  - `SCENARIO_TEST_PLAN.md` (test coverage)
+  - `POC_MANAGEMENT_ONE_PAGER.md` (executive summary)
+- The app Documents tab renders these directly, keeping the same source of truth for web and repository.

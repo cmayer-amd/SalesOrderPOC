@@ -82,12 +82,12 @@
         <td>{{ r.item_number }}</td>
         <td class="code">{{ r.material }}</td>
         <td>{{ r.schedule_line }}</td>
-        <td class="code">{{ r.reason_code }}</td>
+        <td class="code">{{ r.reason_label or r.reason_code }}</td>
         <td class="trace-cell">
-          {% set reasons_view = r.contributing_reasons %}
+          {% set reasons_view = r.contributing_labels if r.contributing_labels else r.contributing_reasons %}
           {% if reasons_view %}
             {% for cr in reasons_view %}
-              <span class="trace-chip code">{{ cr.code }}</span>
+              <span class="trace-chip code">{{ cr.label if cr.label else cr.code }}</span>
             {% endfor %}
           {% endif %}
         </td>
@@ -112,14 +112,15 @@
       </div>
       <div class="trace-primary">
         <span class="trace-label">Primary:</span>
-        <span class="trace-chip code">{{ r.reason_code }}</span>
+        <span class="trace-chip code">{{ r.reason_label or r.reason_code }}</span>
         <span>{{ r.reason_text }}</span>
       </div>
-      {% if r.contributing_reasons %}
+      {% set trace_reasons = r.contributing_labels if r.contributing_labels else r.contributing_reasons %}
+      {% if trace_reasons %}
         <ol class="trace-list">
-          {% for cr in r.contributing_reasons %}
+          {% for cr in trace_reasons %}
             <li>
-              <span class="trace-chip code">{{ cr.code }}</span>
+              <span class="trace-chip code">{{ cr.label if cr.label else cr.code }}</span>
               <span>{{ cr.text }}</span>
             </li>
           {% endfor %}

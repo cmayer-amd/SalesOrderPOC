@@ -96,6 +96,63 @@ def _origin_context_from_params(params: dict[str, str]) -> tuple[list[str], dict
     return chips, compact, suffix
 
 
+def _reason_label(code: str) -> str:
+    normalized = str(code or "").strip()
+    if not normalized:
+        return ""
+    short_map = {
+        "CONFIRMED_FROM_STOCK": "Stock Confirmed",
+        "PARTIAL_STOCK_PLANNED_ORDER": "Stock + Planned",
+        "CONFIRMED_FROM_PLANNED_ORDER": "Planned Order Confirmed",
+        "NO_SCHEDULE_ALLOCATION_EXHAUSTED": "Allocation Exhausted",
+        "NO_SCHEDULE_NO_SUPPLY": "No Supply",
+        "NO_SCHEDULE_MULTI_FACTOR": "Multi-Factor Block",
+        "NO_SCHEDULE_DELIVERY_BLOCKED": "Delivery Blocked",
+        "CONFIRMED_WITH_PLANT_SUBSTITUTION": "Substitution Confirmed",
+        "NO_SCHEDULE_SUBSTITUTION_PENDING": "Substitution Pending",
+        "PARTIAL_ALLOCATION_LIMIT": "Allocation Limited",
+        "DELIVERED_GI_POSTED": "Delivered (GI Posted)",
+        "DELIVERY_IN_PROCESS": "Delivery In Process",
+        "DELIVERY_BLOCKED": "Delivery Blocked",
+        "STOCK_AVAILABLE": "Stock Available",
+        "PLANNED_ORDER_AVAILABLE": "Planned Order Available",
+        "NO_SUPPLY_SOURCE_PLANT": "No Source Supply",
+        "ALLOCATION_ACTIVE": "Allocation Active",
+        "ALLOCATION_EXHAUSTED": "Allocation Exhausted",
+        "PLANT_SUBSTITUTION_RULE": "Substitution Rule",
+        "PLANT_SUBSTITUTION_APPLIED": "Substitution Applied",
+        "PLANT_SUBSTITUTION_AVAILABLE": "Substitution Available",
+        "SCHEDULE_PUSHED_OUT": "Pushed Out",
+        "BOP_PARTIAL": "BOP Partial",
+        "BOP_SUCCESS": "BOP Success",
+        "NO_SCHEDULE_UNRESOLVED": "Unresolved",
+    }
+    if normalized in short_map:
+        return short_map[normalized]
+    return normalized.replace("_", " ").title()
+
+
+def _decorate_result_labels(rows: list[dict[str, object]]) -> None:
+    for row in rows:
+        code = str(row.get("reason_code", "") or "")
+        row["reason_label"] = _reason_label(code)
+        contributing = row.get("contributing_reasons", [])
+        normalized_contributing: list[dict[str, str]] = []
+        if isinstance(contributing, list):
+            for cr in contributing:
+                if not isinstance(cr, dict):
+                    continue
+                c_code = str(cr.get("code", "") or "")
+                normalized_contributing.append(
+                    {
+                        "code": c_code,
+                        "label": _reason_label(c_code),
+                        "text": str(cr.get("text", "") or ""),
+                    }
+                )
+        row["contributing_labels"] = normalized_contributing
+
+
 def _snapshot_review_mailto(report: dict[str, object]) -> str:
     sales_order = str(report.get("sales_order", ""))
     header = report.get("header", {}) if isinstance(report.get("header", {}), dict) else {}
@@ -251,6 +308,8 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
             plant=plant or None,
             only_not_fully_on_request_date=only_not_fully_on_request_date,
         )
+        if isinstance(query_report, dict):
+            _decorate_result_labels(query_report.get("results", []))
     row_class_map = snapshot_store.order_row_class_map()
     order_parts_map = snapshot_store.order_parts_map()
     for order in orders:
@@ -318,13 +377,13 @@ def order_detail(
     )
     sidebar_rows: list[dict[str, str]] = []
     sidebar_label_map = [
-        ("Sales Order", "src_sales_order"),
-        ("Customer", "src_customer"),
-        ("Part (Material)", "src_material"),
+        ("SO", "src_sales_order"),
+        ("Cust", "src_customer"),
+        ("Part", "src_material"),
         ("Plant", "src_plant"),
-        ("Snapshot Version", "src_snapshot_date"),
+        ("Snapshot", "src_snapshot_date"),
         ("Page", "src_page"),
-        ("Rows per page", "src_page_size"),
+        ("Rows/Page", "src_page_size"),
     ]
     for label, key in sidebar_label_map:
         value = str(origin_hidden_fields.get(key, "") or "").strip()
@@ -357,6 +416,8 @@ def order_detail(
         )
 
     report = snapshot_sales_order(so_number, snapshot_store)
+    if isinstance(report, dict):
+        _decorate_result_labels(report.get("results", []))
     review_mailto = _snapshot_review_mailto(report)
     order_parts = sorted(
         {

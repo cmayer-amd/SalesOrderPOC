@@ -39,7 +39,7 @@ Representative order examples from test data are included below.
 | S06 | Multi-factor block + no supply | `5000000039` | `NO_SCHEDULE_MULTI_FACTOR`, contributing reasons include block + no supply |
 | S07 | Plant substitution with alternate supply | `5000000038` | `CONFIRMED_WITH_PLANT_SUBSTITUTION` |
 | S08 | Mixed outcomes in one order (multi-part) | `5000000046`, `5000000048` | One item confirmed, one unscheduled; parts differentiated |
-| S09 | Snapshot vs current comparison | `5000000042` | mode comparison fields populated |
+| S09 | Snapshot reason clarity for pushed-out lines | `5000000011`, `5000000015` | explanation states why delay occurs despite stock/planned supply |
 | S10 | BOP constraint (no BOP_FAILED as final reason) | `5000000042` etc. | no `NO_SCHEDULE_BOP_FAILED` / `BOP_FAILED` in final outputs |
 | S11 | Filter: not fully scheduled on request date | Home/API filter flag | only impacted orders returned |
 | S12 | Pagination and navigation controls | Home list pages | `10/25/50` rows, `« ‹ › »` controls |
@@ -58,8 +58,8 @@ Representative order examples from test data are included below.
   - Validate `determine_reason()` returns `CONFIRMED_FROM_STOCK`.
   - Assert no delayed/unscheduled flags for qualifying rows.
 - **FUT**
-  - Open `/orders/5000000001?mode=snapshot` and `/orders/5000000001?mode=current`.
-  - Confirm reason code and equal requested/scheduled date.
+  - Open `/orders/5000000001?snapshot_date=<latest>`.
+  - Confirm reason label/code and equal requested/scheduled date.
 - **Integration checks**
   - API: `GET /api/troubleshoot/5000000001?mode=snapshot`
   - Future SAP: `VA03`, `CO09`, `MD04`; ABAP debug in ATP determination call stack.
@@ -71,10 +71,10 @@ Representative order examples from test data are included below.
   - Validate delayed rows include `SCHEDULE_PUSHED_OUT` contributing reason.
   - Validate reason text explains requested vs delayed timing.
 - **FUT**
-  - Check `/orders/5000000009?mode=current` and snapshot mode.
+  - Check `/orders/5000000009?snapshot_date=<latest>`.
   - Confirm delayed row highlighting and clear explanation for date push-out.
 - **Integration checks**
-  - API: `GET /api/troubleshoot/5000000009?mode=current`
+  - API: `GET /api/troubleshoot/5000000009`
   - Future SAP: compare against `VBEP` schedule lines and planned receipt timing (`PLAF`/MRP).
 - **Expected**: Supply exists but date is delayed with explicit timing reason.
 
@@ -84,7 +84,7 @@ Representative order examples from test data are included below.
   - Validate `CONFIRMED_FROM_PLANNED_ORDER` is returned when planned supply covers quantity.
   - Validate push-out explanation logic when schedule date > request date.
 - **FUT**
-  - Check `/orders/5000000015?mode=current` and `/orders/5000000050?mode=current`.
+  - Check `/orders/5000000015?snapshot_date=<latest>` and `/orders/5000000050?snapshot_date=<latest>`.
 - **Integration checks**
   - API response reason text includes delayed explanation.
   - Future SAP: `MD04`, planned order availability dates vs request dates.
@@ -154,23 +154,24 @@ Representative order examples from test data are included below.
   - Snapshot support email includes item/part/schedule context for each line.
 - **Expected**: Accurate per-line outcomes without collapsing to a single status.
 
-## S09 - Snapshot vs Current Comparison
-- **Objective**: Validate mode comparison fields and status-changed logic.
+## S09 - Snapshot Reason Clarity for Pushed-Out Lines
+- **Objective**: Ensure delayed schedules clearly state timing cause.
 - **TUT**
-  - Validate `current_state_check_sales_order()` mapping and projection fields.
+  - Validate push-out explanation text distinguishes stock timing vs planned-order timing.
+  - Validate explanation is aligned with primary reason code.
 - **FUT**
-  - Toggle modes in `/orders/5000000042`.
-  - Confirm current fields: reason/date/qty/contributors/can-meet flag.
+  - Open `/orders/5000000011?snapshot_date=<latest>` and confirm stock-plus-planned timing explanation.
+  - Open `/orders/5000000015?snapshot_date=<latest>` and confirm planned-order-after-request-date explanation.
 - **Integration checks**
-  - API: `mode=snapshot` and `mode=current` parity checks.
-- **Expected**: Complete comparison payload and UI consistency.
+  - API: `GET /api/troubleshoot/5000000011` and `GET /api/troubleshoot/5000000015`.
+- **Expected**: Human-readable explanation explicitly answers why request date was missed.
 
 ## S10 - BOP Constraint (No BOP_FAILED Final Output)
 - **Objective**: Enforce business rule that BOP failed is not a final reason.
 - **TUT**
   - Validate remap behavior for legacy BOP fail indicators.
 - **FUT**
-  - Inspect snapshot/current outputs for BOP-related orders.
+  - Inspect snapshot outputs for BOP-related orders.
 - **Integration checks**
   - API assertions: final reasons never equal `NO_SCHEDULE_BOP_FAILED` or `BOP_FAILED`.
   - Future SAP: BOP logs in `SLG1`/job logs (`SM37`) used only as context.
@@ -219,8 +220,8 @@ Representative order examples from test data are included below.
   - Snapshot mode: click `Email PLPC Support`.
   - Confirm recipient `cmayer@amd.com`, readable subject/body content.
 - **Integration checks**
-  - Link appears in snapshot mode only; absent in current mode.
-- **Expected**: Human-readable prefilled support email opens correctly.
+  - Link appears on snapshot detail pages and opens mail client with populated review payload.
+- **Expected**: Human-readable prefilled support email opens correctly (grid-style rows/columns).
 
 ## S15 - API Docs Home Navigation
 - **Objective**: Ensure quick return path from docs to app home.

@@ -11,7 +11,7 @@ Teams currently spend significant time manually tracing schedule outcomes across
 ## What the POC Delivers
 
 - Search by sales order, customer, material, and plant
-- Snapshot and current-state comparison for schedule outcomes
+- Snapshot-based schedule analysis with deterministic reason trace
 - Multi-factor reason trace (primary + contributing reasons)
 - Visual flags for unscheduled and delayed schedules
 - Read-only raw dataset inspection for audit and transparency
@@ -42,7 +42,7 @@ The POC runs on flat-file datasets (50 order headers plus related item/schedule/
 4. **Allocation and Supply Pattern Review**
    - Validate whether allocation exhaustion or source-supply gaps are driving outcomes.
 5. **BOP Outcome Validation**
-   - Compare historical snapshot status vs current feasibility before actioning changes.
+   - Validate BOP context is reflected without exposing `BOP_FAILED` as a final reason.
 6. **Training and Process Standardization**
    - Use deterministic reason outputs as a common troubleshooting playbook.
 
