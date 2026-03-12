@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from html import escape
 from pathlib import Path
 from urllib.parse import quote, urlencode
 
@@ -46,19 +47,24 @@ def _fit_mail_cell(value: object, max_len: int) -> str:
     return f"{text[: max_len - 3]}..."
 
 
-def _grid_table_lines(headers: list[str], rows: list[list[str]]) -> list[str]:
-    widths = [len(h) for h in headers]
+def _html_table(headers: list[str], rows: list[list[str]]) -> str:
+    header_html = "".join(
+        f"<th style='border:1px solid #b8c3d0;padding:6px 8px;background:#eef3f8;text-align:left;'>{escape(h)}</th>"
+        for h in headers
+    )
+    row_html_parts: list[str] = []
     for row in rows:
-        for i, cell in enumerate(row):
-            widths[i] = max(widths[i], len(cell))
-
-    sep = "+" + "+".join("-" * (w + 2) for w in widths) + "+"
-    header_row = "| " + " | ".join(headers[i].ljust(widths[i]) for i in range(len(headers))) + " |"
-    lines = [sep, header_row, sep]
-    for row in rows:
-        lines.append("| " + " | ".join(row[i].ljust(widths[i]) for i in range(len(headers))) + " |")
-    lines.append(sep)
-    return lines
+        cells = "".join(
+            f"<td style='border:1px solid #d6dde5;padding:6px 8px;vertical-align:top;'>{escape(str(cell))}</td>"
+            for cell in row
+        )
+        row_html_parts.append(f"<tr>{cells}</tr>")
+    body_html = "".join(row_html_parts)
+    return (
+        "<table style='border-collapse:collapse;border:1px solid #b8c3d0;"
+        "font-family:Segoe UI,Arial,sans-serif;font-size:12px;'>"
+        f"<thead><tr>{header_html}</tr></thead><tbody>{body_html}</tbody></table>"
+    )
 
 
 def _origin_context_from_params(params: dict[str, str]) -> tuple[list[str], dict[str, str], str]:
@@ -202,16 +208,21 @@ def _snapshot_review_mailto(report: dict[str, object]) -> str:
     for r in results:
         if not isinstance(r, dict):
             continue
-        contributing = r.get("contributing_reasons", [])
+        reason_value = str(r.get("reason_label", "") or r.get("reason_code", "") or "")
+        contributing = r.get("contributing_labels", r.get("contributing_reasons", []))
         contributing_codes = ", ".join(
-            [str(c.get("code", "")) for c in contributing if isinstance(c, dict) and c.get("code", "")]
+            [
+                str(c.get("label", "") or c.get("code", ""))
+                for c in contributing
+                if isinstance(c, dict) and (c.get("label", "") or c.get("code", ""))
+            ]
         )
         schedule_rows.append(
             [
                 _fit_mail_cell(r.get("item_number", ""), 6),
                 _fit_mail_cell(r.get("material", ""), 12),
                 _fit_mail_cell(r.get("schedule_line", ""), 6),
-                _fit_mail_cell(r.get("reason_code", ""), 26),
+                _fit_mail_cell(reason_value, 26),
                 _fit_mail_cell(r.get("requested_qty", ""), 8),
                 _fit_mail_cell(r.get("requested_date", ""), 10),
                 _fit_mail_cell(r.get("confirmed_qty", ""), 8),
@@ -220,25 +231,18 @@ def _snapshot_review_mailto(report: dict[str, object]) -> str:
             ]
         )
 
-    lines = [
-        "Hello Chris,",
-        "",
-        "Please review the snapshot schedule analysis below.",
-        "",
-        "ORDER SUMMARY",
-        "-------------",
-        *_grid_table_lines(summary_headers, summary_rows),
-        "",
-        "SCHEDULE DETAILS",
-        "----------------",
-        *_grid_table_lines(schedule_headers, schedule_rows),
-        "",
-        "Notes:",
-    ]
-    lines.append("- Grid table uses monospaced alignment for quick review.")
-    lines.extend(["Regards,", "Sales Order Schedule Troubleshooter"])
-    body = "\n".join(lines)
-    return f"mailto:cmayer@amd.com?subject={quote(subject)}&body={quote(body)}"
+    body_html = (
+        "<html><body style='font-family:Segoe UI,Arial,sans-serif;font-size:13px;color:#0f2a44;'>"
+        "<p>Hello Chris,</p>"
+        "<p>Please review the snapshot schedule analysis below.</p>"
+        "<h3 style='margin:12px 0 6px;'>Order Summary</h3>"
+        f"{_html_table(summary_headers, summary_rows)}"
+        "<h3 style='margin:14px 0 6px;'>Schedule Details</h3>"
+        f"{_html_table(schedule_headers, schedule_rows)}"
+        "<p style='margin-top:12px;'>Regards,<br>Sales Order Schedule Troubleshooter</p>"
+        "</body></html>"
+    )
+    return f"mailto:cmayer@amd.com?subject={quote(subject)}&body={quote(body_html)}"
 
 
 @router.get("/", response_class=HTMLResponse)
