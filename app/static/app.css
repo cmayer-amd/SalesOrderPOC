@@ -93,7 +93,7 @@ body {
   font-weight: 700;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 860px) {
   .index-layout {
     grid-template-columns: 1fr;
   }
