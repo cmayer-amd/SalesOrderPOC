@@ -23,6 +23,14 @@ DOCUMENT_FILES: dict[str, dict[str, str]] = {
     "functional-design": {"title": "Functional Design", "path": "FUNCTIONAL_DESIGN.md"},
     "scenario-test-plan": {"title": "Scenario Test Plan", "path": "SCENARIO_TEST_PLAN.md"},
     "management-one-pager": {"title": "POC Management One-Pager", "path": "POC_MANAGEMENT_ONE_PAGER.md"},
+    "production-deployment-design": {
+        "title": "Production Deployment Design",
+        "path": "PRODUCTION_DEPLOYMENT_DESIGN.md",
+    },
+    "production-deployment-one-pager": {
+        "title": "Production Deployment One-Pager",
+        "path": "PRODUCTION_DEPLOYMENT_ONE_PAGER.md",
+    },
 }
 
 
