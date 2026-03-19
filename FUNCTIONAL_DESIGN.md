@@ -323,6 +323,18 @@ Data includes scenarios for:
 - LAN share URL format:
   - `http://<host-ip>:8000`
 - Firewall/network policy may be required for coworker access.
+
+### Production Transition References
+
+For production migration beyond this POC design, use:
+
+- `PRODUCTION_DEPLOYMENT_DESIGN.md` for target architecture, security model, and deployment options.
+- `PRODUCTION_DEPLOYMENT_ONE_PAGER.md` for executive summary and decision framing.
+- `PRODUCTION_IMPLEMENTATION_STEPS.md` for execution checklist:
+  - Snowflake cutover (replace sample datasets)
+  - Okta authentication onboarding
+  - RBAC enforcement with Snowflake least-privilege roles
+  - hardening, validation, and go-live steps.
 - Cloud-hosted share URL (Render):
   - `https://sales-order-poc.onrender.com/`
 

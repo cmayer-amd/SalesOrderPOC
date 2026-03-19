@@ -48,6 +48,7 @@ Representative order examples from test data are included below.
 | S15 | Docs usability | `/docs` | visible Home link on right side |
 | S16 | Render deploy runtime compatibility | Render build/deploy logs | service runs on Python 3.12.8 and health check passes |
 | S17 | Query-detail consistency and state retention | `5000000039` and filtered list flows | exact SO behavior, preserved query context, same detail format, back returns same state |
+| S18 | Production migration readiness | Snowflake/Okta/RBAC integration checklist | app can run without sample CSV data and enforces role-based access |
 
 ---
 
@@ -259,6 +260,21 @@ Representative order examples from test data are included below.
   - Detail route remains stable with query-context params appended.
 - **Expected**: No context mismatch between query and detail; user trust and continuity are preserved.
 
+## S18 - Production Migration Readiness (Snowflake + Okta + RBAC)
+- **Objective**: Validate production implementation prerequisites and cutover readiness.
+- **TUT**
+  - Validate runtime can initialize with Snowflake-backed data source configuration.
+  - Validate role guard checks for Admin/Analyst/Support/ReadOnly_Audit access paths.
+- **FUT**
+  - Validate Okta-authenticated user access to UI with role-appropriate behavior.
+  - Validate unauthorized users are blocked from protected routes/actions.
+  - Validate app behavior when sample CSV mode is disabled.
+- **Integration checks**
+  - Snowflake connectivity and least-privilege role usage (`ROLE_SO_APP_READ`).
+  - Group-to-role claim mapping from Okta to app authorization.
+  - Audit events captured for login, query, detail view, and support action workflows.
+- **Expected**: Production dependency stack is operational and security controls are enforced.
+
 ---
 
 ## 5) Future SAP-Connected Validation Addendum
@@ -287,7 +303,7 @@ When integrating this POC with SAP S/4HANA (PS4/QS4/DS4), extend each scenario w
 
 The POC scenario test cycle is complete when:
 
-- All 17 scenarios pass TUT + FUT checks.
+- All 18 scenarios pass TUT + FUT checks.
 - API and web outputs are consistent for equivalent queries.
 - No final output contains `NO_SCHEDULE_BOP_FAILED` or `BOP_FAILED`.
 - Delayed stock/planned-order cases include explicit push-out explanation.

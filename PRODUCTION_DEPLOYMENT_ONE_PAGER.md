@@ -83,3 +83,7 @@ This keeps data pipeline responsibilities separate from runtime user experience 
 - RBAC + Okta integrated and validated
 - Snowflake governance controls approved by security/data owners
 - Production SLOs and support model in place
+
+## Execution Reference
+
+For rollout execution details, use `PRODUCTION_IMPLEMENTATION_STEPS.md`.

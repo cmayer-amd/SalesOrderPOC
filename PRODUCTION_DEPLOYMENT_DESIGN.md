@@ -168,3 +168,12 @@ Cutover gate examples:
 - Data engineering/Dataiku: pipelines and curated Snowflake objects
 - Security/IAM: Okta and policy governance
 - Operations/SRE: deployment, monitoring, incident management
+
+## 12) Implementation Runbook Reference
+
+Use `PRODUCTION_IMPLEMENTATION_STEPS.md` as the execution checklist for:
+
+- replacing sample datasets with Snowflake curated objects
+- onboarding Okta OIDC authentication and claims mapping
+- enforcing RBAC aligned to Snowflake least-privilege roles
+- production hardening, go-live, and post-go-live operations.

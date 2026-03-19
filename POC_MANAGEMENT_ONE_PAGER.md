@@ -65,3 +65,9 @@ The POC runs on flat-file datasets (50 order headers plus related item/schedule/
 3. Integrate with SAP data sources (read-only first) and automate refresh.
 4. Add role-based access and environment hardening for broader rollout.
 5. Define production support model and ownership for rule governance.
+
+## Production Documentation Set
+
+- `PRODUCTION_DEPLOYMENT_DESIGN.md`: full target architecture and control model.
+- `PRODUCTION_DEPLOYMENT_ONE_PAGER.md`: leadership summary for decision-making.
+- `PRODUCTION_IMPLEMENTATION_STEPS.md`: execution checklist for Snowflake cutover, Okta onboarding, RBAC setup, and go-live readiness.

@@ -190,8 +190,12 @@ Use this recovery sequence:
 ## Documentation artifacts
 
 - Functional design: `FUNCTIONAL_DESIGN.md`
-- Management summary: `POC_MANAGEMENT_ONE_PAGER.md`
 - Scenario test plan: `SCENARIO_TEST_PLAN.md`
+- Management summary: `POC_MANAGEMENT_ONE_PAGER.md`
+- Pilot operations runbook: `PILOT_RUNBOOK.md`
+- Production architecture design: `PRODUCTION_DEPLOYMENT_DESIGN.md`
+- Production summary: `PRODUCTION_DEPLOYMENT_ONE_PAGER.md`
+- Production execution checklist: `PRODUCTION_IMPLEMENTATION_STEPS.md`
 - In-app documents hub: `/documents`
 
 ## Snapshot-only behavior
@@ -209,11 +213,16 @@ Use this recovery sequence:
   - `NO_SCHEDULE_NO_SUPPLY` -> `No Supply`
   - `SCHEDULE_PUSHED_OUT` -> `Pushed Out`
 
+## Production documentation set
+
+- Use `PRODUCTION_DEPLOYMENT_DESIGN.md` for target production architecture and controls.
+- Use `PRODUCTION_DEPLOYMENT_ONE_PAGER.md` for leadership/executive communication.
+- Use `PRODUCTION_IMPLEMENTATION_STEPS.md` as the implementation playbook:
+  - migration from sample CSV data to Snowflake
+  - Okta authentication integration
+  - RBAC with Snowflake least-privilege roles
+  - security, testing, cutover, and operational hardening checklist.
+
 ## Documentation consolidation
 
-- Core handoff docs are kept in four markdown artifacts:
-  - `README.md` (run/deploy/usage)
-  - `FUNCTIONAL_DESIGN.md` (behavior and rules)
-  - `SCENARIO_TEST_PLAN.md` (test coverage)
-  - `POC_MANAGEMENT_ONE_PAGER.md` (executive summary)
-- The app Documents tab renders these directly, keeping the same source of truth for web and repository.
+- The app Documents tab renders all active markdown docs directly, keeping one source of truth for web and repository.
