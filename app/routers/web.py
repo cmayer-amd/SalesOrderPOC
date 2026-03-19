@@ -274,13 +274,15 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
         only_not_fully_on_request_date=only_not_fully_on_request_date,
     )
 
-    # When SO is typed in the query box and resolves to one exact order,
-    # route to the same detail UI users get from clicking the SO hyperlink.
-    if sales_order and len(orders) == 1 and str(orders[0].get("sales_order", "")) == sales_order:
-        return RedirectResponse(
-            url=f"/orders/{sales_order}?mode=snapshot&snapshot_date={selected_snapshot_date}{detail_link_suffix}",
-            status_code=303,
-        )
+    # When any query resolves to exactly one order, route to the same
+    # detail UI users get from clicking the SO hyperlink.
+    if len(orders) == 1:
+        resolved_so = str(orders[0].get("sales_order", "") or "").strip()
+        if resolved_so:
+            return RedirectResponse(
+                url=f"/orders/{resolved_so}?mode=snapshot&snapshot_date={selected_snapshot_date}{detail_link_suffix}",
+                status_code=303,
+            )
 
     query_report = None
     if has_filters:

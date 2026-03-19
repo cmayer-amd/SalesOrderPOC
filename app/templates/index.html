@@ -124,8 +124,9 @@
 </section>
 {% endif %}
 
+{% if not has_filters %}
 <section class="card">
-  <h2>Sales Orders{% if has_filters %} (Filtered){% endif %}</h2>
+  <h2>Sales Orders</h2>
   {% if pagination.total_orders > 0 %}
     <p>
       Showing up to <strong>{{ pagination.page_size }}</strong> per page |
@@ -195,6 +196,7 @@
     <p>No orders found. Add CSV files in `data/`.</p>
   {% endif %}
 </section>
+{% endif %}
   </div>
 </div>
 {% endblock %}
