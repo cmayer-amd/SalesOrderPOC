@@ -470,6 +470,15 @@ th {
   color: #425466;
 }
 
+.doc-rendered .mermaid {
+  margin: 0.8rem 0 1rem;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #d6dde5;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
 .chat-subtitle {
   margin-top: 0;
   color: #425466;

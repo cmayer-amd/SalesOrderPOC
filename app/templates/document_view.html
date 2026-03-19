@@ -13,6 +13,7 @@
   <article id="doc-rendered" class="doc-rendered">Loading document preview...</article>
   <script id="doc-markdown" type="text/plain">{{ doc_content }}</script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script>
     (function () {
       const sourceEl = document.getElementById("doc-markdown");
@@ -29,6 +30,19 @@
       });
       const markdown = sourceEl.textContent || "";
       targetEl.innerHTML = marked.parse(markdown);
+      const mermaidCodeBlocks = targetEl.querySelectorAll("pre code.language-mermaid");
+      mermaidCodeBlocks.forEach((codeEl) => {
+        const pre = codeEl.parentElement;
+        if (!pre) return;
+        const mermaidHost = document.createElement("div");
+        mermaidHost.className = "mermaid";
+        mermaidHost.textContent = codeEl.textContent || "";
+        pre.replaceWith(mermaidHost);
+      });
+      if (typeof mermaid !== "undefined") {
+        mermaid.initialize({ startOnLoad: false, securityLevel: "loose" });
+        mermaid.run({ querySelector: ".mermaid" });
+      }
     })();
   </script>
 </section>

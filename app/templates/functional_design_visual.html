@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>Functional Design Visual</h2>
+  <div class="actions">
+    <a href="/">Home</a>
+    <a href="/documents">Documents</a>
+  </div>
+</section>
+
+<section class="card doc-content-card">
+  <p>This visual companion summarizes architecture, process flow, and decision logic.</p>
+
+  <div class="visual-diagram-wrap">
+    <svg viewBox="0 0 1240 760" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sales Order Troubleshooter architecture diagram">
+      <defs>
+        <style>
+          .title { font: 700 28px "Segoe UI", Arial, sans-serif; fill: #17212f; }
+          .subtitle { font: 500 15px "Segoe UI", Arial, sans-serif; fill: #425466; }
+          .boxTitle { font: 700 17px "Segoe UI", Arial, sans-serif; fill: #0f2a44; }
+          .boxText { font: 500 13px "Segoe UI", Arial, sans-serif; fill: #17212f; }
+          .lane { fill: #f8fbff; stroke: #d6dde5; stroke-width: 1.3; rx: 12; }
+          .node { fill: #ffffff; stroke: #9db3cc; stroke-width: 1.6; rx: 12; }
+          .nodeAccent { fill: #eef4fb; }
+          .arrow { stroke: #43617e; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
+          .label { font: 600 12px "Segoe UI", Arial, sans-serif; fill: #2b4865; }
+          .icon { font: 700 26px "Segoe UI Emoji", "Segoe UI Symbol", sans-serif; }
+        </style>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="8.5" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#43617e"></polygon>
+        </marker>
+      </defs>
+
+      <text x="24" y="44" class="title">SAP Sales Order Schedule Troubleshooter - Functional Architecture</text>
+      <text x="24" y="70" class="subtitle">Snapshot-based schedule reasoning with deterministic logic, chatbot UX, and governed document views</text>
+
+      <rect x="24" y="96" width="1192" height="172" class="lane"></rect>
+      <text x="42" y="123" class="boxTitle">User Experience Layer</text>
+
+      <rect x="48" y="142" width="250" height="108" class="node nodeAccent"></rect>
+      <text x="62" y="175" class="icon">🖥️</text>
+      <text x="102" y="175" class="boxTitle">Web App Home</text>
+      <text x="62" y="200" class="boxText">Query by SO / Customer / Part / Plant</text>
+      <text x="62" y="220" class="boxText">Pagination + filters + dataset view</text>
+
+      <rect x="330" y="142" width="250" height="108" class="node nodeAccent"></rect>
+      <text x="344" y="175" class="icon">💬</text>
+      <text x="384" y="175" class="boxTitle">Chatbot Interface</text>
+      <text x="344" y="200" class="boxText">Natural language prompts</text>
+      <text x="344" y="220" class="boxText">In-chat reason cards + status colors</text>
+
+      <rect x="612" y="142" width="250" height="108" class="node nodeAccent"></rect>
+      <text x="626" y="175" class="icon">📄</text>
+      <text x="666" y="175" class="boxTitle">Documents Hub</text>
+      <text x="626" y="200" class="boxText">Functional docs + visual artifacts</text>
+      <text x="626" y="220" class="boxText">Markdown and visual rendering</text>
+
+      <rect x="894" y="142" width="298" height="108" class="node nodeAccent"></rect>
+      <text x="908" y="175" class="icon">✉️</text>
+      <text x="948" y="175" class="boxTitle">Support Handoff</text>
+      <text x="908" y="200" class="boxText">Email PLPC Support from snapshot detail</text>
+      <text x="908" y="220" class="boxText">Structured schedule context for review</text>
+
+      <rect x="24" y="286" width="1192" height="196" class="lane"></rect>
+      <text x="42" y="314" class="boxTitle">Application and Reasoning Layer</text>
+
+      <rect x="72" y="336" width="302" height="124" class="node"></rect>
+      <text x="86" y="367" class="icon">⚙️</text>
+      <text x="126" y="367" class="boxTitle">FastAPI Routes</text>
+      <text x="86" y="392" class="boxText">Web routes, API routes, chatbot endpoint</text>
+      <text x="86" y="412" class="boxText">Snapshot selection + context preservation</text>
+      <text x="86" y="432" class="boxText">Case-insensitive wildcard filtering</text>
+
+      <rect x="430" y="336" width="360" height="124" class="node"></rect>
+      <text x="444" y="367" class="icon">🧠</text>
+      <text x="484" y="367" class="boxTitle">Reason Engine</text>
+      <text x="444" y="392" class="boxText">Delivery -> Supply -> Allocation -> Planned -> BOP precedence</text>
+      <text x="444" y="412" class="boxText">Push-out explanation and contributing reasons</text>
+      <text x="444" y="432" class="boxText">Confirmation guardrail for unscheduled lines</text>
+
+      <rect x="846" y="336" width="322" height="124" class="node"></rect>
+      <text x="860" y="367" class="icon">🛡️</text>
+      <text x="900" y="367" class="boxTitle">Security and Controls (Design Target)</text>
+      <text x="860" y="392" class="boxText">Okta auth + RBAC model</text>
+      <text x="860" y="412" class="boxText">Audit-ready operations and governance</text>
+      <text x="860" y="432" class="boxText">Production hardening blueprint</text>
+
+      <rect x="24" y="500" width="1192" height="200" class="lane"></rect>
+      <text x="42" y="528" class="boxTitle">Data and Platform Layer</text>
+
+      <rect x="72" y="550" width="320" height="126" class="node"></rect>
+      <text x="86" y="581" class="icon">🗂️</text>
+      <text x="126" y="581" class="boxTitle">POC Snapshot Datasets</text>
+      <text x="86" y="606" class="boxText">Sales orders, schedules, stock, planned</text>
+      <text x="86" y="626" class="boxText">allocations, deliveries, BOP, substitutions</text>
+      <text x="86" y="646" class="boxText">Versioned snapshots for analysis</text>
+
+      <rect x="448" y="550" width="334" height="126" class="node"></rect>
+      <text x="462" y="581" class="icon">🗄️</text>
+      <text x="502" y="581" class="boxTitle">Snowflake (Production Target)</text>
+      <text x="462" y="606" class="boxText">Curated secure views as data contract</text>
+      <text x="462" y="626" class="boxText">Least-privilege roles and governance</text>
+      <text x="462" y="646" class="boxText">Performance and freshness controls</text>
+
+      <rect x="838" y="550" width="330" height="126" class="node"></rect>
+      <text x="852" y="581" class="icon">☁️</text>
+      <text x="892" y="581" class="boxTitle">Deployment Platforms</text>
+      <text x="852" y="606" class="boxText">Local / LAN / Render for POC sharing</text>
+      <text x="852" y="626" class="boxText">Hybrid Dataiku + FastAPI pattern for prod</text>
+      <text x="852" y="646" class="boxText">CI/CD and runtime governance</text>
+
+      <path d="M 300 196 L 430 196" class="arrow"></path>
+      <text x="342" y="186" class="label">query</text>
+      <path d="M 580 196 L 430 196" class="arrow"></path>
+      <text x="507" y="186" class="label">chat query</text>
+      <path d="M 790 196 L 846 196" class="arrow"></path>
+      <text x="804" y="186" class="label">view docs</text>
+      <path d="M 374 398 L 430 398" class="arrow"></path>
+      <path d="M 790 398 L 846 398" class="arrow"></path>
+      <path d="M 540 460 L 540 550" class="arrow"></path>
+      <text x="553" y="512" class="label">snapshot and contract data</text>
+      <path d="M 228 460 L 228 550" class="arrow"></path>
+      <path d="M 1006 460 L 1006 550" class="arrow"></path>
+    </svg>
+  </div>
+
+  <h3>Decision Logic View</h3>
+  <div class="visual-diagram-wrap">
+    <svg viewBox="0 0 1240 520" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Decision logic diagram">
+      <defs>
+        <style>
+          .t { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #17212f; }
+          .n { fill: #ffffff; stroke: #9db3cc; stroke-width: 1.4; rx: 10; }
+          .d { fill: #f4f8fc; stroke: #8eabc6; stroke-width: 1.4; rx: 10; }
+          .l { font: 600 13px "Segoe UI", Arial, sans-serif; fill: #17324a; }
+          .a { stroke: #43617e; stroke-width: 2; fill: none; marker-end: url(#arr2); }
+          .note { font: 500 12px "Segoe UI", Arial, sans-serif; fill: #425466; }
+        </style>
+        <marker id="arr2" markerWidth="10" markerHeight="7" refX="8.5" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#43617e"></polygon>
+        </marker>
+      </defs>
+
+      <text x="20" y="36" class="t">Reason Engine Decision Path and Guardrail</text>
+
+      <rect x="30" y="70" width="190" height="54" class="n"></rect>
+      <text x="48" y="102" class="l">Start Schedule Line</text>
+
+      <rect x="290" y="70" width="210" height="54" class="d"></rect>
+      <text x="310" y="102" class="l">Delivery Blocked?</text>
+
+      <rect x="580" y="30" width="260" height="54" class="n"></rect>
+      <text x="598" y="62" class="l">No Schedule Multi Factor</text>
+
+      <rect x="580" y="108" width="260" height="54" class="n"></rect>
+      <text x="598" y="140" class="l">No Schedule Delivery Blocked</text>
+
+      <rect x="290" y="200" width="210" height="54" class="d"></rect>
+      <text x="306" y="232" class="l">Delivery GI Posted?</text>
+
+      <rect x="580" y="200" width="260" height="54" class="n"></rect>
+      <text x="598" y="232" class="l">Delivered GI Posted</text>
+
+      <rect x="290" y="300" width="210" height="54" class="d"></rect>
+      <text x="304" y="332" class="l">Line Actually Confirmed?</text>
+
+      <rect x="580" y="300" width="260" height="54" class="n"></rect>
+      <text x="598" y="332" class="l">No Schedule or Unresolved</text>
+
+      <rect x="920" y="260" width="280" height="54" class="d"></rect>
+      <text x="938" y="292" class="l">Supply Coverage Branch</text>
+
+      <rect x="920" y="330" width="280" height="54" class="n"></rect>
+      <text x="938" y="362" class="l">Confirmed Stock / Planned / Substitution</text>
+
+      <rect x="920" y="410" width="280" height="74" class="n"></rect>
+      <text x="938" y="442" class="l">Guardrail: only confirmed rows</text>
+      <text x="938" y="462" class="note">confirmed qty + schedule date + status confirmed</text>
+
+      <path d="M 220 97 L 290 97" class="a"></path>
+      <path d="M 500 97 L 580 57" class="a"></path>
+      <path d="M 500 97 L 580 135" class="a"></path>
+      <path d="M 395 124 L 395 200" class="a"></path>
+      <path d="M 500 227 L 580 227" class="a"></path>
+      <path d="M 395 254 L 395 300" class="a"></path>
+      <path d="M 500 327 L 580 327" class="a"></path>
+      <path d="M 500 327 L 920 287" class="a"></path>
+      <path d="M 1060 314 L 1060 330" class="a"></path>
+      <path d="M 1060 384 L 1060 410" class="a"></path>
+
+      <text x="518" y="83" class="note">Yes + no source supply</text>
+      <text x="525" y="121" class="note">Yes only</text>
+      <text x="352" y="182" class="note">No</text>
+      <text x="356" y="286" class="note">No</text>
+    </svg>
+  </div>
+</section>
+{% endblock %}

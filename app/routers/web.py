@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 DOCUMENT_FILES: dict[str, dict[str, str]] = {
     "readme": {"title": "README", "path": "README.md"},
     "functional-design": {"title": "Functional Design", "path": "FUNCTIONAL_DESIGN.md"},
+    "functional-design-visual": {"title": "Functional Design Visual", "path": "FUNCTIONAL_DESIGN_VISUAL.md"},
     "scenario-test-plan": {"title": "Scenario Test Plan", "path": "SCENARIO_TEST_PLAN.md"},
     "management-one-pager": {"title": "POC Management One-Pager", "path": "POC_MANAGEMENT_ONE_PAGER.md"},
     "production-deployment-design": {
@@ -497,6 +498,9 @@ def documents_index(request: Request) -> HTMLResponse:
 
 @router.get("/documents/{doc_key}", response_class=HTMLResponse)
 def document_view(doc_key: str, request: Request) -> HTMLResponse:
+    if doc_key == "functional-design-visual":
+        return templates.TemplateResponse(request, "functional_design_visual.html", {})
+
     config = DOCUMENT_FILES.get(doc_key)
     if not config:
         raise HTTPException(status_code=404, detail=f"Document {doc_key} not found.")
