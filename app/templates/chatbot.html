@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+  <h2>Schedule Chatbot</h2>
+  <p class="chat-subtitle">
+    Ask by <strong>Sales Order</strong>, <strong>Customer</strong>, or <strong>Part</strong>. Examples:
+    <span class="code">order 5000000042</span>,
+    <span class="code">customer CUST-1001</span>,
+    <span class="code">part MAT-006</span>.
+  </p>
+
+  <div class="chat-toolbar">
+    <label>
+      Snapshot Version
+      <select id="chat-snapshot-date">
+        {% for snap in snapshot_versions %}
+          <option value="{{ snap }}" {% if snapshot_date == snap %}selected{% endif %}>{{ snap }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <div id="chat-thread" class="chat-thread">
+    <div class="chat-msg assistant">
+      <div class="chat-bubble">
+        Ask me for schedule analysis by order, customer, or part. I will return matching schedule lines and reasons.
+      </div>
+    </div>
+  </div>
+
+  <form id="chat-form" class="chat-input-row">
+    <input id="chat-input" type="text" placeholder="Type your query..." autocomplete="off" />
+    <button type="submit">Send</button>
+  </form>
+</section>
+
+<script>
+  const chatForm = document.getElementById("chat-form");
+  const chatInput = document.getElementById("chat-input");
+  const chatThread = document.getElementById("chat-thread");
+  const snapshotSelect = document.getElementById("chat-snapshot-date");
+
+  function appendMessage(role, text) {
+    const row = document.createElement("div");
+    row.className = `chat-msg ${role}`;
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble";
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatThread.appendChild(row);
+    chatThread.scrollTop = chatThread.scrollHeight;
+    return row;
+  }
+
+  function appendResults(results) {
+    if (!Array.isArray(results) || results.length === 0) {
+      return;
+    }
+    const row = document.createElement("div");
+    row.className = "chat-msg assistant";
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble";
+    const cards = document.createElement("div");
+    cards.className = "chat-result-cards";
+    for (const r of results) {
+      const card = document.createElement("div");
+      const reasonCode = String(r.reason_code || "");
+      const requestedDate = String(r.requested_date || "");
+      const scheduleDate = String(r.schedule_date || "");
+      const isUnscheduled = !scheduleDate || reasonCode.startsWith("NO_SCHEDULE");
+      const isPushedOut = !isUnscheduled && requestedDate && scheduleDate && scheduleDate > requestedDate;
+      card.className = `chat-result-card ${isUnscheduled ? "status-unscheduled" : (isPushedOut ? "status-delayed" : "status-ok")}`;
+      const contributing = Array.isArray(r.contributing_reason_labels)
+        ? r.contributing_reason_labels
+        : [];
+      card.innerHTML = `
+        <div class="chat-result-header">
+          SO ${r.sales_order || ""} | Item ${r.item_number || ""} / Sch ${r.schedule_line || ""} | Part ${r.material || ""}
+        </div>
+        <div class="chat-result-meta">Customer ${r.customer || ""} | Region ${r.region || ""}</div>
+        <div class="chat-result-meta">Req ${r.requested_date || ""} | Sched ${r.schedule_date || ""}</div>
+        <div class="chat-chip-row">
+          <span class="trace-chip code">${r.reason_label || r.reason_code || ""}</span>
+          ${
+            contributing.length
+              ? contributing.map((c) => `<span class="trace-chip code">${c}</span>`).join("")
+              : ""
+          }
+        </div>
+        <div class="chat-result-text">${r.reason_text || ""}</div>
+      `;
+      cards.appendChild(card);
+    }
+    bubble.appendChild(cards);
+    row.appendChild(bubble);
+    chatThread.appendChild(row);
+    chatThread.scrollTop = chatThread.scrollHeight;
+  }
+
+  chatForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const message = (chatInput.value || "").trim();
+    if (!message) {
+      return;
+    }
+    appendMessage("user", message);
+    chatInput.value = "";
+
+    const loading = appendMessage("assistant", "Thinking...");
+    try {
+      const response = await fetch("/api/chatbot/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          snapshot_date: snapshotSelect.value || "",
+        }),
+      });
+      const data = await response.json();
+      loading.remove();
+      appendMessage("assistant", data.assistant_message || "No response returned.");
+      appendResults(data.results || []);
+    } catch (error) {
+      loading.remove();
+      appendMessage("assistant", "Request failed. Please try again.");
+    }
+  });
+</script>
+{% endblock %}

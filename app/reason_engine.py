@@ -230,6 +230,49 @@ def _substitution_evidence(item: dict[str, Any], store: DataStore) -> tuple[list
     return evidence, total_coverage
 
 
+def _successful_supply_reason(
+    req_qty: float,
+    conf_qty: float,
+    schedule_date: str,
+    schedule_status: str,
+    stock_qty: float,
+    planned_qty: float,
+    substitution_coverage: float,
+    alloc_remaining: float,
+    is_delivery_blocked: bool,
+) -> tuple[str, str] | None:
+    """
+    Determine if the line should be treated as successfully scheduled.
+    A line is successful when requested quantity is fully confirmed, no hard
+    blockers exist, and stock/planned/substitution coverage can satisfy demand.
+    """
+    if req_qty <= 0 or conf_qty < req_qty:
+        return None
+    # Do not classify as successful unless schedule line is actually confirmed.
+    if not schedule_date or str(schedule_status or "").upper() == "UNCONFIRMED":
+        return None
+    if is_delivery_blocked or alloc_remaining <= 0:
+        return None
+
+    source_supply = stock_qty + planned_qty
+    effective_supply = source_supply + substitution_coverage
+    if effective_supply < req_qty:
+        return None
+
+    if stock_qty >= req_qty:
+        return "CONFIRMED_FROM_STOCK", "Stock fully covers requested quantity."
+    if source_supply >= req_qty:
+        if stock_qty > 0:
+            return "PARTIAL_STOCK_PLANNED_ORDER", "Partial stock plus planned orders provide coverage."
+        return "CONFIRMED_FROM_PLANNED_ORDER", "Planned orders provide required supply."
+    if substitution_coverage > 0:
+        return (
+            "CONFIRMED_WITH_PLANT_SUBSTITUTION",
+            "Source supply is insufficient; substitute-plant supply closes the gap.",
+        )
+    return None
+
+
 def determine_reason(
     header: dict[str, Any],
     item: dict[str, Any],
@@ -241,6 +284,8 @@ def determine_reason(
     sched_no = schedule.get("schedule_line", "")
     req_qty = _as_float(schedule.get("requested_qty"))
     conf_qty = _as_float(schedule.get("confirmed_qty"))
+    schedule_date = str(schedule.get("schedule_date", "") or "")
+    schedule_status = str(schedule.get("schedule_status", "") or "")
 
     contributing: list[dict[str, str]] = []
     deliveries = []
@@ -314,6 +359,8 @@ def determine_reason(
     earliest_stock_date = _earliest_row_date(stock_rows, "stock_date")
     earliest_planned_date = _earliest_row_date(planned_rows, "available_date")
 
+    line_is_confirmed = bool(schedule_date) and schedule_status.upper() != "UNCONFIRMED" and conf_qty > 0
+
     if is_delivery_blocked and no_source_supply:
         reason_code = "NO_SCHEDULE_MULTI_FACTOR"
         reason_text = "Multiple blockers: active delivery block and no source-plant supply."
@@ -323,17 +370,17 @@ def determine_reason(
     elif is_delivery_posted:
         reason_code = "DELIVERED_GI_POSTED"
         reason_text = "Delivery exists and GI is posted."
-    elif req_qty > 0 and stock_qty >= req_qty and alloc_remaining >= req_qty:
+    elif line_is_confirmed and req_qty > 0 and stock_qty >= req_qty and alloc_remaining >= req_qty:
         reason_code = "CONFIRMED_FROM_STOCK"
         reason_text = "Stock fully covers requested quantity."
-    elif req_qty > 0 and source_supply < req_qty and effective_supply >= req_qty and alloc_remaining > 0:
+    elif line_is_confirmed and req_qty > 0 and source_supply < req_qty and effective_supply >= req_qty and alloc_remaining > 0:
         reason_code = "CONFIRMED_WITH_PLANT_SUBSTITUTION"
         if no_source_supply:
             reason_text = "Source plant has no supply; schedule is supported by plant substitution supply."
         else:
             reason_text = "Source supply is insufficient; substitute-plant supply closes the gap."
         contributing.append({"code": "PLANT_SUBSTITUTION_APPLIED", "text": "Alternate-plant substitution supply is applied."})
-    elif req_qty > 0 and source_supply >= req_qty:
+    elif line_is_confirmed and req_qty > 0 and source_supply >= req_qty:
         if alloc_remaining <= 0:
             reason_code = "NO_SCHEDULE_ALLOCATION_EXHAUSTED"
             reason_text = "Supply exists but allocation remaining quantity is exhausted."
@@ -352,6 +399,12 @@ def determine_reason(
     elif no_source_supply and substitution_coverage <= 0:
         reason_code = "NO_SCHEDULE_NO_SUPPLY"
         reason_text = "No stock and no planned order supply found for requested scope."
+    elif not line_is_confirmed and source_supply >= req_qty and alloc_remaining > 0 and not is_delivery_blocked:
+        reason_code = "NO_SCHEDULE_UNRESOLVED"
+        reason_text = (
+            "Stock/planned supply exists, but this line is not confirmed yet "
+            "(no confirmed schedule date/quantity in the current dataset row)."
+        )
     elif no_source_supply and substitution_coverage > 0:
         reason_code = "NO_SCHEDULE_SUBSTITUTION_PENDING"
         reason_text = "Substitution rule exists, but substitution supply was not applied."
@@ -359,6 +412,27 @@ def determine_reason(
     elif is_delivery_in_process:
         reason_code = "DELIVERY_IN_PROCESS"
         reason_text = "Delivery document exists and is in process."
+
+    # Guardrail: when supply can satisfy and the line is fully confirmed with no
+    # hard blockers, force a successful scheduled outcome.
+    success_override = _successful_supply_reason(
+        req_qty=req_qty,
+        conf_qty=conf_qty,
+        schedule_date=schedule_date,
+        schedule_status=schedule_status,
+        stock_qty=stock_qty,
+        planned_qty=planned_qty,
+        substitution_coverage=substitution_coverage,
+        alloc_remaining=alloc_remaining,
+        is_delivery_blocked=is_delivery_blocked,
+    )
+    if success_override and reason_code in {
+        "NO_SCHEDULE_UNRESOLVED",
+        "NO_SCHEDULE_NO_SUPPLY",
+        "NO_SCHEDULE_SUBSTITUTION_PENDING",
+        "PARTIAL_ALLOCATION_LIMIT",
+    }:
+        reason_code, reason_text = success_override
 
     if is_pushed_out and (
         reason_code in {"CONFIRMED_FROM_STOCK", "PARTIAL_STOCK_PLANNED_ORDER", "CONFIRMED_FROM_PLANNED_ORDER"}
@@ -693,6 +767,27 @@ def snapshot_sales_order(so_number: str, store: DataStore) -> dict[str, Any]:
             plant=item.get("plant", ""),
             storage_location=item.get("storage_location", ""),
         )
+        req_qty = _as_float(schedule.get("requested_qty"))
+        conf_qty = _as_float(schedule.get("confirmed_qty"))
+        schedule_date = str(schedule.get("schedule_date", "") or "")
+        schedule_status = str(schedule.get("schedule_status", "") or "")
+        alloc_rows = _allocation_candidates(item, header, store)
+        alloc_remaining = max((_as_float(r.get("remaining_qty")) for r in alloc_rows), default=req_qty)
+        is_delivery_blocked = any(d.get("delivery_block", "").upper() == "Y" for d in deliveries)
+        substitution_rows, substitution_coverage = _substitution_evidence(item=item, store=store)
+        success_override = _successful_supply_reason(
+            req_qty=req_qty,
+            conf_qty=conf_qty,
+            schedule_date=schedule_date,
+            schedule_status=schedule_status,
+            stock_qty=stock_qty,
+            planned_qty=planned_qty,
+            substitution_coverage=substitution_coverage,
+            alloc_remaining=alloc_remaining,
+            is_delivery_blocked=is_delivery_blocked,
+        )
+        if success_override and reason_code.startswith("NO_SCHEDULE"):
+            reason_code, reason_text = success_override
         pushed_out_text = _pushed_out_explanation(
             requested_date=str(schedule.get("requested_date", "") or ""),
             schedule_date=str(schedule.get("schedule_date", "") or ""),

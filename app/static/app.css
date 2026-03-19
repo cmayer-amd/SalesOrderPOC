@@ -469,3 +469,140 @@ th {
   border-left: 3px solid #9db3cc;
   color: #425466;
 }
+
+.chat-subtitle {
+  margin-top: 0;
+  color: #425466;
+}
+
+.chat-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.65rem;
+}
+
+.chat-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+}
+
+.chat-toolbar select {
+  border: 1px solid #b8c3d0;
+  border-radius: 6px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.chat-thread {
+  border: 1px solid #d6dde5;
+  border-radius: 8px;
+  background: #fbfdff;
+  min-height: 420px;
+  max-height: 62vh;
+  overflow: auto;
+  padding: 0.7rem;
+}
+
+.chat-msg {
+  display: flex;
+  margin: 0.35rem 0;
+}
+
+.chat-msg.user {
+  justify-content: flex-end;
+}
+
+.chat-msg.assistant {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 92%;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #d6dde5;
+  background: #ffffff;
+  font-size: 0.9rem;
+}
+
+.chat-msg.user .chat-bubble {
+  background: #0f2a44;
+  border-color: #0f2a44;
+  color: #fff;
+}
+
+.chat-input-row {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.55rem;
+}
+
+.chat-input-row input {
+  border: 1px solid #b8c3d0;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.95rem;
+}
+
+.chat-input-row button {
+  background: #0f2a44;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+
+.chat-result-table {
+  min-width: 0;
+}
+
+.chat-result-cards {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.chat-result-card {
+  border: 1px solid #d6dde5;
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 0.45rem 0.55rem;
+}
+
+.chat-result-card.status-ok {
+  box-shadow: inset 3px 0 0 #0f2a44;
+}
+
+.chat-result-card.status-unscheduled {
+  background: #fff1f0;
+  border-color: #f3b7b3;
+  box-shadow: inset 3px 0 0 #d94841;
+}
+
+.chat-result-card.status-delayed {
+  background: #fff8e6;
+  border-color: #f1d691;
+  box-shadow: inset 3px 0 0 #d48806;
+}
+
+.chat-result-header {
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.chat-result-meta {
+  color: #425466;
+  margin-bottom: 0.15rem;
+}
+
+.chat-chip-row {
+  margin: 0.25rem 0 0.2rem;
+}
+
+.chat-result-text {
+  color: #17212f;
+}

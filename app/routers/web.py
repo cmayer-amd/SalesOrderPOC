@@ -463,6 +463,20 @@ def dataset_view(
     )
 
 
+@router.get("/chatbot", response_class=HTMLResponse)
+def chatbot_page(request: Request) -> HTMLResponse:
+    snapshot_date = (request.query_params.get("snapshot_date") or "").strip()
+    selected_snapshot_date, _, available_snapshot_versions = get_snapshot_selection(snapshot_date)
+    return templates.TemplateResponse(
+        request,
+        "chatbot.html",
+        {
+            "snapshot_date": selected_snapshot_date,
+            "snapshot_versions": available_snapshot_versions,
+        },
+    )
+
+
 @router.get("/documents", response_class=HTMLResponse)
 def documents_index(request: Request) -> HTMLResponse:
     docs = []
