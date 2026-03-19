@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Any
 
 import pandas as pd
@@ -27,6 +28,34 @@ def _as_float(value: str | int | float | None) -> float:
         return float(value)
     except ValueError:
         return 0.0
+
+
+def _wildcard_to_regex(pattern: str) -> str:
+    escaped = re.escape(pattern)
+    # Support shell-style wildcards and SQL-like wildcard aliases.
+    escaped = escaped.replace(r"\*", ".*").replace(r"\?", ".")
+    escaped = escaped.replace(r"\%", ".*").replace(r"\_", ".")
+    return f"^{escaped}$"
+
+
+def _match_mask(series: pd.Series, raw_filter: str | None) -> pd.Series:
+    normalized = str(raw_filter or "").strip()
+    if normalized == "":
+        return pd.Series([True] * len(series), index=series.index)
+
+    values = series.fillna("").astype(str)
+    has_wildcard = any(token in normalized for token in ("*", "?", "%", "_"))
+    if has_wildcard:
+        regex = _wildcard_to_regex(normalized)
+        return values.str.match(regex, case=False, na=False)
+
+    return values.str.lower() == normalized.lower()
+
+
+def _sorted_unique_non_empty(series: pd.Series) -> list[str]:
+    values = [str(v).strip() for v in series.fillna("").astype(str).tolist()]
+    unique_values = {v for v in values if v}
+    return sorted(unique_values, key=lambda v: v.lower())
 
 
 @dataclass
@@ -108,22 +137,22 @@ class DataStore:
         df = self.sales_orders.copy()
         if sales_order:
             # Keep SO query behavior consistent with detail-link navigation.
-            df = df[df["sales_order"].astype(str) == sales_order]
+            df = df[_match_mask(df["sales_order"], sales_order)]
 
         # If an SO is explicitly provided, treat it as the primary selector
         # so text-box query flow matches SO hyperlink drilldown behavior.
         if not sales_order:
             if customer:
-                df = df[df["customer"] == customer]
+                df = df[_match_mask(df["customer"], customer)]
 
             if material or plant:
                 if self.sales_order_items.empty:
                     return []
                 items = self.sales_order_items.copy()
                 if material:
-                    items = items[items["material"] == material]
+                    items = items[_match_mask(items["material"], material)]
                 if plant:
-                    items = items[items["plant"] == plant]
+                    items = items[_match_mask(items["plant"], plant)]
                 allowed_orders = set(items["sales_order"].tolist())
                 df = df[df["sales_order"].isin(allowed_orders)]
 
@@ -185,18 +214,23 @@ class DataStore:
         return {so: ", ".join(sorted(parts)) for so, parts in parts_by_order.items()}
 
     def sales_order_bundle(self, so_number: str) -> dict[str, Any]:
+        so_normalized = str(so_number or "").strip().lower()
         header = (
-            self.sales_orders[self.sales_orders["sales_order"] == so_number]
+            self.sales_orders[self.sales_orders["sales_order"].astype(str).str.lower() == so_normalized]
             if not self.sales_orders.empty
             else pd.DataFrame()
         )
         items = (
-            self.sales_order_items[self.sales_order_items["sales_order"] == so_number]
+            self.sales_order_items[
+                self.sales_order_items["sales_order"].astype(str).str.lower() == so_normalized
+            ]
             if not self.sales_order_items.empty
             else pd.DataFrame()
         )
         schedules = (
-            self.sales_order_schedules[self.sales_order_schedules["sales_order"] == so_number]
+            self.sales_order_schedules[
+                self.sales_order_schedules["sales_order"].astype(str).str.lower() == so_normalized
+            ]
             if not self.sales_order_schedules.empty
             else pd.DataFrame()
         )
@@ -204,6 +238,35 @@ class DataStore:
             "header": header.to_dict(orient="records"),
             "items": items.to_dict(orient="records"),
             "schedules": schedules.to_dict(orient="records"),
+        }
+
+    def query_lov_options(self) -> dict[str, list[str]]:
+        """Searchable LOV suggestions for query inputs."""
+        sales_orders = (
+            _sorted_unique_non_empty(self.sales_orders["sales_order"])
+            if not self.sales_orders.empty and "sales_order" in self.sales_orders.columns
+            else []
+        )
+        customers = (
+            _sorted_unique_non_empty(self.sales_orders["customer"])
+            if not self.sales_orders.empty and "customer" in self.sales_orders.columns
+            else []
+        )
+        materials = (
+            _sorted_unique_non_empty(self.sales_order_items["material"])
+            if not self.sales_order_items.empty and "material" in self.sales_order_items.columns
+            else []
+        )
+        plants = (
+            _sorted_unique_non_empty(self.sales_order_items["plant"])
+            if not self.sales_order_items.empty and "plant" in self.sales_order_items.columns
+            else []
+        )
+        return {
+            "sales_order": sales_orders,
+            "customer": customers,
+            "material": materials,
+            "plant": plants,
         }
 
     def delayed_order_set(self) -> set[str]:

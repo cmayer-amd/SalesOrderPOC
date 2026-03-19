@@ -19,19 +19,23 @@
       <form method="get" class="search-form">
         <label>
           Sales Order
-          <input type="text" name="sales_order" value="{{ query.sales_order }}" placeholder="5000000042">
+          <input type="text" name="sales_order" list="sales-order-lov" value="{{ query.sales_order }}" placeholder="5000000042 or 50000000*">
         </label>
         <label>
           Customer
-          <input type="text" name="customer" value="{{ query.customer }}" placeholder="CUST-1001">
+          <input type="text" name="customer" list="customer-lov" value="{{ query.customer }}" placeholder="CUST-1001 or CUST*">
         </label>
         <label>
           Part (Material)
-          <input type="text" name="material" value="{{ query.material }}" placeholder="MAT-006">
+          <input type="text" name="material" list="material-lov" value="{{ query.material }}" placeholder="MAT-006 or MAT-*">
         </label>
         <label>
           Plant (optional)
-          <input type="text" name="plant" value="{{ query.plant }}" placeholder="2020">
+          <input type="text" name="plant" list="plant-lov" value="{{ query.plant }}" placeholder="2020 or 20*">
+        </label>
+        <label>
+          <span>Query behavior</span>
+          <small>Case-insensitive. Wildcards supported: <span class="code">*</span> and <span class="code">?</span> (also <span class="code">%</span> and <span class="code">_</span>).</small>
         </label>
         <label>
           Snapshot Version
@@ -66,6 +70,26 @@
           <a href="/">Clear</a>
         </div>
       </form>
+      <datalist id="sales-order-lov">
+        {% for value in query_lov.sales_order %}
+          <option value="{{ value }}"></option>
+        {% endfor %}
+      </datalist>
+      <datalist id="customer-lov">
+        {% for value in query_lov.customer %}
+          <option value="{{ value }}"></option>
+        {% endfor %}
+      </datalist>
+      <datalist id="material-lov">
+        {% for value in query_lov.material %}
+          <option value="{{ value }}"></option>
+        {% endfor %}
+      </datalist>
+      <datalist id="plant-lov">
+        {% for value in query_lov.plant %}
+          <option value="{{ value }}"></option>
+        {% endfor %}
+      </datalist>
     </section>
 
 {% if has_filters %}

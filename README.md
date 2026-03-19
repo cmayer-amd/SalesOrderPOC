@@ -192,7 +192,6 @@ Use this recovery sequence:
 - Functional design: `FUNCTIONAL_DESIGN.md`
 - Scenario test plan: `SCENARIO_TEST_PLAN.md`
 - Management summary: `POC_MANAGEMENT_ONE_PAGER.md`
-- Pilot operations runbook: `PILOT_RUNBOOK.md`
 - Production architecture design: `PRODUCTION_DEPLOYMENT_DESIGN.md`
 - Production summary: `PRODUCTION_DEPLOYMENT_ONE_PAGER.md`
 - Production execution checklist: `PRODUCTION_IMPLEMENTATION_STEPS.md`

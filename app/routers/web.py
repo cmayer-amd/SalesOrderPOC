@@ -23,7 +23,6 @@ DOCUMENT_FILES: dict[str, dict[str, str]] = {
     "functional-design": {"title": "Functional Design", "path": "FUNCTIONAL_DESIGN.md"},
     "scenario-test-plan": {"title": "Scenario Test Plan", "path": "SCENARIO_TEST_PLAN.md"},
     "management-one-pager": {"title": "POC Management One-Pager", "path": "POC_MANAGEMENT_ONE_PAGER.md"},
-    "pilot-runbook": {"title": "Pilot Runbook", "path": "PILOT_RUNBOOK.md"},
     "production-deployment-design": {
         "title": "Production Deployment Design",
         "path": "PRODUCTION_DEPLOYMENT_DESIGN.md",
@@ -334,6 +333,7 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
                 "page_size": str(page_size),
                 "only_not_fully_on_request_date": "1" if only_not_fully_on_request_date else "",
             },
+            "query_lov": snapshot_store.query_lov_options(),
             "has_filters": has_filters,
             "query_report": query_report,
             "detail_link_suffix": detail_link_suffix,
