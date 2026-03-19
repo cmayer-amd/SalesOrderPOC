@@ -504,7 +504,10 @@ def _troubleshoot_bundle(bundle: dict[str, Any], store: DataStore) -> dict[str, 
     for schedule in bundle["schedules"]:
         key = (schedule.get("sales_order", ""), schedule.get("item_number", ""))
         item = item_index.get(key, {})
-        analyzed.append(determine_reason(header, item, schedule, store))
+        result = determine_reason(header, item, schedule, store)
+        result["customer"] = header.get("customer", "")
+        result["region"] = header.get("region", "")
+        analyzed.append(result)
 
     return {"sales_order": header.get("sales_order", ""), "header": header, "results": analyzed}
 
@@ -717,6 +720,8 @@ def snapshot_sales_order(so_number: str, store: DataStore) -> dict[str, Any]:
                 "item_number": item_no,
                 "schedule_line": sched_no,
                 "material": item.get("material", ""),
+                "customer": header.get("customer", ""),
+                "region": header.get("region", ""),
                 "plant": item.get("plant", ""),
                 "requested_qty": schedule.get("requested_qty", ""),
                 "confirmed_qty": schedule.get("confirmed_qty", ""),

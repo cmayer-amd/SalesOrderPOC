@@ -106,6 +106,9 @@
         <tr>
           <th>Sales Order</th>
           <th>Item</th>
+          <th>Part</th>
+          <th>Customer</th>
+          <th>Region</th>
           <th>Schedule</th>
           <th>Reason Code</th>
           <th>Contributing Reasons</th>
@@ -123,6 +126,9 @@
         <tr class="{% if is_unscheduled %}row-unscheduled{% elif is_delayed %}row-delayed{% endif %}">
           <td><a href="/orders/{{ row.sales_order }}?mode=snapshot&snapshot_date={{ query.snapshot_date }}{{ detail_link_suffix }}">{{ row.sales_order }}</a></td>
           <td>{{ row.item_number }}</td>
+          <td class="code">{{ row.material }}</td>
+          <td>{{ row.customer }}</td>
+          <td>{{ row.region }}</td>
           <td>{{ row.schedule_line }}</td>
           <td class="trace-cell">
             <span class="trace-chip code">{{ row.reason_label or row.reason_code }}</span>
@@ -185,6 +191,7 @@
           <th>Customer</th>
           <th>Region</th>
           <th>Requested Date</th>
+          <th>Scheduled Date</th>
           <th>Scenario</th>
         </tr>
       </thead>
@@ -196,6 +203,7 @@
           <td>{{ row.customer }}</td>
           <td>{{ row.region }}</td>
           <td>{{ row.requested_delivery_date }}</td>
+          <td>{{ row.scheduled_date }}</td>
           <td>{{ row.scenario }}</td>
         </tr>
       {% endfor %}

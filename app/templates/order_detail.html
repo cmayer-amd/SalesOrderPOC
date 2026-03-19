@@ -50,6 +50,8 @@
       <tr>
         <th>Item</th>
         <th>Part</th>
+        <th>Customer</th>
+        <th>Region</th>
         <th>Schedule</th>
         <th>Recorded Reason</th>
         <th>Contributing Reasons</th>
@@ -68,6 +70,8 @@
       <tr class="{% if is_unscheduled %}row-unscheduled{% elif is_delayed %}row-delayed{% endif %}">
         <td>{{ r.item_number }}</td>
         <td class="code">{{ r.material }}</td>
+        <td>{{ r.customer }}</td>
+        <td>{{ r.region }}</td>
         <td>{{ r.schedule_line }}</td>
         <td class="trace-cell">
           <span class="trace-chip code">{{ r.reason_label or r.reason_code }}</span>

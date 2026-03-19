@@ -302,12 +302,14 @@ def index(request: Request, data_store: DataStore = Depends(get_store)) -> HTMLR
             _decorate_result_labels(query_report.get("results", []))
     row_class_map = snapshot_store.order_row_class_map()
     order_parts_map = snapshot_store.order_parts_map()
+    order_scheduled_date_map = snapshot_store.order_scheduled_date_map()
     for order in orders:
         so = order.get("sales_order", "")
         order["row_class"] = row_class_map.get(so, "")
         order["is_delayed"] = order["row_class"] == "row-delayed"
         order["is_unscheduled"] = order["row_class"] == "row-unscheduled"
         order["parts"] = order_parts_map.get(so, "")
+        order["scheduled_date"] = order_scheduled_date_map.get(so, "")
 
     total_orders = len(orders)
     total_pages = math.ceil(total_orders / page_size) if total_orders > 0 else 0

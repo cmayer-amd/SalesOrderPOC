@@ -279,6 +279,22 @@ class DataStore:
         df = df[df["schedule_date"] > df["requested_date"]]
         return set(df["sales_order"].tolist())
 
+    def order_scheduled_date_map(self) -> dict[str, str]:
+        """
+        Derive order-level scheduled date for the main list.
+        Uses the earliest non-empty schedule date across all schedule lines.
+        """
+        if self.sales_order_schedules.empty:
+            return {}
+
+        df = self.sales_order_schedules.copy()
+        df = df[df["schedule_date"] != ""]
+        if df.empty:
+            return {}
+
+        grouped = df.groupby("sales_order")["schedule_date"].min()
+        return {str(so): str(date) for so, date in grouped.to_dict().items()}
+
     def order_row_class_map(self) -> dict[str, str]:
         """
         Derive row class for main order list from schedule lines.
