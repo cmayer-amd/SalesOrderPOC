@@ -11,6 +11,7 @@ Teams currently spend significant time manually tracing schedule outcomes across
 ## What the POC Delivers
 
 - Search by sales order, customer, material, and plant
+- Conversational chatbot interface for order/customer/part questions
 - Snapshot-based schedule analysis with deterministic reason trace
 - Multi-factor reason trace (primary + contributing reasons)
 - Visual flags for unscheduled and delayed schedules
@@ -45,6 +46,8 @@ The POC runs on flat-file datasets (50 order headers plus related item/schedule/
    - Validate BOP context is reflected without exposing `BOP_FAILED` as a final reason.
 6. **Training and Process Standardization**
    - Use deterministic reason outputs as a common troubleshooting playbook.
+7. **Conversation-Driven Triage**
+   - Analysts can use natural-language prompts in chatbot flow for fast first-pass diagnosis.
 
 ## Limitations of Current POC
 
@@ -57,6 +60,11 @@ The POC runs on flat-file datasets (50 order headers plus related item/schedule/
 - Public cloud endpoint target: `https://sales-order-poc.onrender.com/`
 - Runtime compatibility requires Python `3.12.8` (configured in `render.yaml` and `runtime.txt`)
 - If deployment fails with `pydantic-core`/`maturin` build errors, run Render **Manual Deploy** with **Clear build cache & deploy**
+
+## Reasoning Accuracy Guardrail
+
+- Confirmed reason codes are only used when lines are actually confirmed in schedule data.
+- Unscheduled/unconfirmed lines are prevented from being mislabeled as planned-order confirmed.
 
 ## Recommended Next Steps
 

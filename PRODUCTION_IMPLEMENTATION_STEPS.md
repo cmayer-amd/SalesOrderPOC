@@ -151,6 +151,16 @@ Acceptance criteria:
 - Production runtime starts without CSV dependency.
 - Health checks include dependency readiness checks.
 
+## 6.1 Chatbot Channel Readiness
+
+- Secure chatbot API route with the same role checks as query APIs.
+- Validate natural-language parsing behavior for sales order/customer/part prompts.
+- Add chatbot-specific observability:
+  - intent classification outcomes
+  - no-result events
+  - response latency and failure rates.
+- Ensure chatbot responses do not bypass any data access restrictions enforced for standard APIs.
+
 ## 7) Security, Compliance, and Audit Hardening
 
 Must-have controls:
@@ -181,6 +191,7 @@ Security tests:
 - Query, detail, pagination, highlighting behavior.
 - Role-specific UI and action controls.
 - Support email workflow with approval control.
+- Chatbot conversational behavior and in-chat result rendering.
 
 ## 8.3 Integration and Enterprise Validation
 

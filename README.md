@@ -21,6 +21,7 @@ Starter FastAPI scaffold for SAP sales order schedule-date troubleshooting.
 - Sales-order pagination with configurable page size (`10`, `25`, `50`)
 - Snapshot review mail action (`Email PLPC Support`) with prefilled schedule details
 - Part visibility at both order and schedule levels (including multi-part orders)
+- Dedicated chatbot page (`/chatbot`) for conversational order/customer/part queries
 
 ## Project structure
 
@@ -171,6 +172,35 @@ Use this recovery sequence:
 - Order detail Schedule Analysis includes a `Part` column per line item.
 - Order detail header shows `Parts in order` for quick multi-line/multi-part context.
 
+## Query behavior
+
+- Query fields are case-insensitive.
+- Wildcards are supported in query fields:
+  - `*` and `?` (shell style)
+  - `%` and `_` (SQL style aliases)
+- Searchable LOV-style datalist suggestions are available for:
+  - Sales Order
+  - Customer
+  - Part (Material)
+  - Plant
+
+## Chatbot interface
+
+- Web page: `GET /chatbot`
+- API endpoint: `POST /api/chatbot/query`
+- Chatbot supports natural-language prompts for:
+  - sales order
+  - customer
+  - part/material
+- Example prompts:
+  - `order 5000000042`
+  - `tell me about all the orders for customer CUST-1001`
+  - `tell me about all the orders for part MAT-001`
+- Chat results render inside the conversation window (no hyperlink dependency) and include:
+  - SO / item / schedule / part / customer / region / request date / schedule date
+  - primary and contributing reasons as chips
+  - status color coding (unscheduled = red, pushed out = amber)
+
 ## Order detail navigation and support mail
 
 - In the **Schedule Analysis** section on order detail pages:
@@ -202,6 +232,13 @@ Use this recovery sequence:
 - The application operates on snapshot datasets only (no current-state mode).
 - Order detail is always rendered as `Snapshot (Last BOP Run)`.
 - `GET /api/troubleshoot/{so_number}` returns snapshot analysis regardless of legacy/current query params.
+
+## Scheduling reason guardrail
+
+- A line is only marked as confirmed when it is actually confirmed in the schedule row
+  (`confirmed_qty >= requested_qty`, confirmed schedule date exists, and row is not `UNCONFIRMED`).
+- Supply availability alone does not mark an unconfirmed line as successful.
+- If planned/stock supply exists but the line is still unconfirmed, the line remains a no-schedule outcome.
 
 ## UI label normalization
 

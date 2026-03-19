@@ -25,6 +25,7 @@ This keeps data pipeline responsibilities separate from runtime user experience 
 - **Authorization**: RBAC in app layer with Okta group-to-role mapping
 - **Data**: Snowflake secure views for sales orders, schedules, supply, allocations, deliveries, BOP, and substitutions
 - **Operations**: centralized logs, metrics, traces, and audit records
+- **Channels**: standard query UI and chatbot UX under the same security/audit controls
 
 ## RBAC Roles (Initial)
 

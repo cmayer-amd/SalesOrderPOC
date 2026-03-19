@@ -70,6 +70,12 @@ flowchart LR
 - Map Okta groups to app roles at login/session issuance
 - Re-evaluate role claims on session refresh
 
+### Conversational UX Channel (Chatbot)
+
+- Treat chatbot query route as a first-class application channel under the same RBAC policies as search screens.
+- Ensure chatbot request/response logs include user identity and trace IDs for auditability.
+- Apply the same data minimization and field-level controls for chatbot payloads as standard API responses.
+
 ## 5) Snowflake Data Architecture
 
 ### Data Contract Objects
@@ -134,6 +140,10 @@ Use **Option D (Hybrid)**:
 - Blue/green or canary deployment strategy with rollback gates
 - Observability: logs, metrics, traces, and alerting
 - Runbooks and on-call ownership defined by platform/app/data teams
+- Add chatbot quality monitoring:
+  - intent parse accuracy
+  - low-confidence/no-result rate
+  - escalation path for ambiguous prompts
 
 ## 9) Testing and Cutover
 

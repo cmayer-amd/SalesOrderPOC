@@ -49,6 +49,8 @@ Representative order examples from test data are included below.
 | S16 | Render deploy runtime compatibility | Render build/deploy logs | service runs on Python 3.12.8 and health check passes |
 | S17 | Query-detail consistency and state retention | `5000000039` and filtered list flows | exact SO behavior, preserved query context, same detail format, back returns same state |
 | S18 | Production migration readiness | Snowflake/Okta/RBAC integration checklist | app can run without sample CSV data and enforces role-based access |
+| S19 | Chatbot conversational query handling | `/chatbot` and `/api/chatbot/query` | natural language prompts resolve to order/customer/part and return in-chat results |
+| S20 | Confirmation guardrail correctness | `5000000048` item `000020` and similar rows | unscheduled lines are never labeled with confirmed planned/stock outcomes |
 
 ---
 
@@ -275,6 +277,40 @@ Representative order examples from test data are included below.
   - Audit events captured for login, query, detail view, and support action workflows.
 - **Expected**: Production dependency stack is operational and security controls are enforced.
 
+## S19 - Chatbot Conversational Query Handling
+- **Objective**: Validate conversation-style troubleshooting for natural-language prompts.
+- **TUT**
+  - Validate prompt parser maps phrases to correct query type (sales order/customer/material).
+  - Validate chatbot response builder returns normalized reason labels and contributing reason labels.
+- **FUT**
+  - Open `/chatbot`.
+  - Submit:
+    - `order 5000000042`
+    - `tell me about all the orders for customer CUST-1001`
+    - `tell me about all the orders for part MAT-001`
+  - Confirm responses render in chat bubbles with in-chat result cards (no dependency on hyperlinks).
+- **Integration checks**
+  - API: `POST /api/chatbot/query` returns `query_type`, counts, and result rows.
+  - Verify chatbot respects snapshot selection.
+- **Expected**: Correct intent parsing and in-conversation schedule reason output.
+
+## S20 - Confirmation Guardrail Correctness
+- **Objective**: Ensure unscheduled/unconfirmed lines are not mislabeled as successful planned/stock confirmation.
+- **TUT**
+  - Validate success override requires true confirmed schedule state:
+    - schedule date present
+    - schedule status not `UNCONFIRMED`
+    - confirmed quantity covers requested quantity.
+  - Validate unconfirmed lines with supply stay in no-schedule/unresolved outcomes.
+- **FUT**
+  - Check `5000000048` item `000020` via:
+    - `GET /api/troubleshoot/5000000048`
+    - `GET /api/troubleshoot?sales_order=5000000048`
+  - Confirm no `CONFIRMED_FROM_PLANNED_ORDER`/`PARTIAL_STOCK_PLANNED_ORDER` for that unscheduled line.
+- **Integration checks**
+  - Run dataset-level scan for any unscheduled lines tagged as confirmed supply outcomes.
+- **Expected**: No unscheduled line is presented as successfully scheduled.
+
 ---
 
 ## 5) Future SAP-Connected Validation Addendum
@@ -303,7 +339,7 @@ When integrating this POC with SAP S/4HANA (PS4/QS4/DS4), extend each scenario w
 
 The POC scenario test cycle is complete when:
 
-- All 18 scenarios pass TUT + FUT checks.
+- All 20 scenarios pass TUT + FUT checks.
 - API and web outputs are consistent for equivalent queries.
 - No final output contains `NO_SCHEDULE_BOP_FAILED` or `BOP_FAILED`.
 - Delayed stock/planned-order cases include explicit push-out explanation.

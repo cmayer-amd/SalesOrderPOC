@@ -27,6 +27,7 @@ This is designed for S/4HANA-style ATP/AATP reasoning with AMD-oriented concepts
 
 - Query by sales order, customer, material/part, and optional plant.
 - Show schedule reasons for all matching schedules.
+- Conversational chatbot query by sales order/customer/part.
 - Highlight business-critical rows:
   - Unscheduled rows
   - Delayed rows (schedule date > requested date)
@@ -158,7 +159,16 @@ Example:
   - `NO_SUPPLY_SOURCE_PLANT`
   - `DELIVERY_IN_PROCESS`
 
-## 7.3 Snapshot Mode
+## 7.3 Confirmation Guardrail
+
+- A line must have true schedule confirmation to be labeled as confirmed:
+  - `confirmed_qty >= requested_qty`
+  - schedule date present
+  - schedule status is not `UNCONFIRMED`
+- Stock/planned/substitution availability without confirmed schedule state is not sufficient for a confirmed reason.
+- If supply exists but line remains unconfirmed, reason remains no-schedule/unresolved based on constraints in the dataset row.
+
+## 7.4 Snapshot Mode
 
 Use saved schedule and last BOP context as historical status.
 
@@ -174,6 +184,7 @@ Sections:
 - Rows-per-page control (`10`, `25`, `50`)
 - Filtered schedule reason results table
 - Sales order list table
+- Chatbot link in top navigation (`/chatbot`)
 
 Behavior:
 
@@ -223,6 +234,21 @@ Panels:
 - `Back` navigation is expected to return to the same filtered and paged list state.
 - Snapshot version selection remains consistent between list and detail flows.
 
+## 8.4 Chatbot Page (`/chatbot`)
+
+- Conversation-style interaction for schedule troubleshooting.
+- Natural-language prompt parsing for:
+  - Sales order prompts
+  - Customer prompts
+  - Part/material prompts
+- Chat response content:
+  - schedule-level fields (SO/item/schedule/part/customer/region/req/sched dates)
+  - primary and contributing reasons as chips
+  - in-chat status color coding:
+    - red for unscheduled
+    - amber for pushed-out
+    - standard for on-time/confirmed
+
 Highlights:
 
 - Red unscheduled schedule rows
@@ -239,12 +265,14 @@ Highlights:
 - `GET /api/sales-orders/{so_number}/items/{item_number}/schedules/{schedule_line}`
 - `GET /api/troubleshoot/{so_number}` (snapshot output)
 - `GET /api/troubleshoot?sales_order=&customer=&material=&plant=`
+- `POST /api/chatbot/query`
 
 ### Web Endpoints
 
 - `GET /` home, query, and dataset status
 - `GET /orders/{so_number}` order detail, snapshot mode
 - `GET /datasets/{dataset_name}` read-only raw dataset inspection
+- `GET /chatbot` conversational query page
 
 ### Response Expectations
 
